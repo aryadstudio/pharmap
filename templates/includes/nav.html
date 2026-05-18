@@ -1,0 +1,209 @@
+{% load static %}
+
+<nav class="navbar" id="mainNavbar">
+
+  <!-- Logo -->
+  <a href="{% url 'home' %}" class="navbar-logo">
+    <div class="logo-mark">
+      <img src="{% static 'icons/symbole-logo.png' %}" width="20" height="20" alt="PharMap logo" />
+    </div>
+    <span class="logo-text">Phar<em>Map</em></span>
+  </a>
+
+  <!-- Liens principaux (masqués sur mobile) -->
+  <ul class="navbar-nav">
+    <li>
+      <a href="{% url 'home' %}"
+         class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+        Accueil
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'pharmacies:search' %}"
+         class="{% if request.resolver_match.url_name == 'search' %}active{% endif %}">
+        Recherche
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'pharmacies:pharmacy_list' %}"
+         class="{% if 'pharmacy' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+        Pharmacies
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'how_it_works' %}"
+         class="{% if request.resolver_match.url_name == 'how_it_works' %}active{% endif %}">
+        Comment ça marche
+      </a>
+    </li>
+  </ul>
+
+  <!-- Actions (masquées sur mobile) -->
+  <div class="navbar-actions">
+    {% if user.is_authenticated %}
+
+      {% if user.role == 'PHARMACIST' or user.role == 'ADMIN' %}
+        {# ── Pharmacien connecté ── #}
+        <a href="{% url 'pharmacist:dashboard' %}" class="btn btn-ghost btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </a>
+        <a href="{% url 'auth_user:logout' %}" class="btn btn-outline btn-sm">
+          Déconnexion
+        </a>
+
+      {% else %}
+        {# ── Patient connecté ── #}
+        <a href="{% url 'patient:profile' %}" class="btn btn-ghost btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+          {{ user.first_name|default:user.username }}
+        </a>
+        <a href="{% url 'orders:order_list' %}" class="btn btn-outline btn-sm">
+          Mes commandes
+        </a>
+
+      {% endif %}
+
+    {% else %}
+      {# ── Non connecté ── #}
+      <a href="{% url 'auth_user:login_pharmacist' %}"
+         class="btn btn-ghost btn-sm"
+         style="color:var(--ink-4);font-size:0.78rem;">
+        Espace pro
+      </a>
+      <a href="{% url 'auth_user:login' %}" class="btn btn-ghost btn-sm">
+        Connexion
+      </a>
+      <a href="{% url 'auth_user:register' %}" class="btn btn-primary btn-sm">
+        S'inscrire
+      </a>
+    {% endif %}
+  </div>
+
+</nav>
+
+<!-- ══ NAVIGATION MOBILE (bottom nav) ══ -->
+<nav class="bottom-nav" aria-label="Navigation principale mobile">
+  <div class="bottom-nav-items">
+
+    <a href="{% url 'home' %}"
+       class="bottom-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+      <div class="bnav-pip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+      Accueil
+    </a>
+
+    <a href="{% url 'pharmacies:search' %}"
+       class="bottom-nav-item {% if request.resolver_match.url_name == 'search' %}active{% endif %}">
+      <div class="bnav-pip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </div>
+      Recherche
+    </a>
+
+    <a href="{% url 'pharmacies:pharmacy_list' %}"
+       class="bottom-nav-item {% if 'pharmacy' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+      <div class="bnav-pip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
+          <path d="M3 9l2-5h14l2 5"/>
+          <line x1="12" y1="9" x2="12" y2="20"/>
+          <line x1="3" y1="14" x2="21" y2="14"/>
+        </svg>
+      </div>
+      Pharmacies
+    </a>
+
+    {% if user.is_authenticated %}
+
+      {% if user.role == 'PHARMACIST' or user.role == 'ADMIN' %}
+        <a href="{% url 'pharmacist:dashboard' %}"
+           class="bottom-nav-item {% if 'dashboard' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+          <div class="bnav-pip">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          </div>
+          Dashboard
+        </a>
+      {% else %}
+        <a href="{% url 'patient:profile' %}"
+           class="bottom-nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+          <div class="bnav-pip">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+          </div>
+          Profil
+        </a>
+      {% endif %}
+
+    {% else %}
+      <a href="{% url 'auth_user:login' %}"
+         class="bottom-nav-item {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+        <div class="bnav-pip">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+        </div>
+        Connexion
+      </a>
+    {% endif %}
+
+  </div>
+</nav>
+
+<!-- ══ MESSAGES DJANGO → TOASTS ══ -->
+{% if messages %}
+  <div class="toast-container" id="toastContainer">
+    {% for message in messages %}
+      <div class="toast"
+           style="background:{% if 'error' in message.tags %}#C53030{% elif 'success' in message.tags %}var(--green){% else %}var(--ink){% endif %};">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+  <script>
+    setTimeout(function () {
+      var toasts = document.querySelectorAll('.toast');
+      toasts.forEach(function (t) {
+        t.style.transition = 'opacity 0.4s';
+        t.style.opacity    = '0';
+        setTimeout(function () { t.remove(); }, 400);
+      });
+    }, 3500);
+  </script>
+{% endif %}
+
+<!-- ══ NAVBAR SCROLL EFFECT ══ -->
+<script>
+(function () {
+  var nav = document.getElementById('mainNavbar');
+  if (!nav) return;
+  function onScroll() {
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+})();
+</script>

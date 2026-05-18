@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Commande #{{ order.id }} — PharMap{% endblock %}
+
+{% block extra_css %}
+<style>
+.od-hero { background: var(--navy); padding: 60px 0 44px; position: relative; overflow: hidden; }
+.od-hero-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 80% at 80% 30%, rgba(26,122,94,0.12) 0%, transparent 70%);
+}
+.od-hero-inner { position: relative; z-index: 1; }
+.od-title {
+  font-family: 'Fraunces', serif; font-size: clamp(1.6rem,3vw,2.2rem);
+  color: white; font-weight: 300; margin-bottom: 10px;
+}
+.od-title em { font-style: italic; color: #6EDCBC; }
+.od-badge {
+  display: inline-block; font-family: 'Syne', sans-serif;
+  font-size: 0.75rem; font-weight: 700;
+  padding: 5px 14px; border-radius: 999px; letter-spacing: 0.05em;
+}
+.badge-PENDING   { background: #fff3cd; color: #856404; }
+.badge-CONFIRMED { background: #cff4fc; color: #055160; }
+.badge-READY     { background: #d1fae5; color: #065f46; }
+.badge-DELIVERED { background: #d4edda; color: #155724; }
+.badge-CANCELLED { background: #f8d7da; color: #721c24; }
+
+.od-grid {
+  display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start;
+}
+.od-card {
+  background: white; border-radius: var(--r-xl);
+  border: 1px solid var(--line); padding: 32px;
+}
+.od-section-title {
+  font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--ink-4); text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.od-item-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid var(--line);
+}
+.od-item-row:last-child { border-bottom: none; }
+.od-item-name { font-size: 0.9rem; font-weight: 600; color: var(--ink); }
+.od-item-qty  { font-size: 0.8rem; color: var(--ink-4); margin-top: 2px; }
+.od-item-price { font-family: 'Fraunces', serif; font-size: 1rem; color: var(--navy); }
+
+.od-total-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 0 0;
+}
+.od-total-label { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--ink); }
+.od-total-val {
+  font-family: 'Fraunces', serif; font-size: 1.5rem;
+  color: var(--navy); font-weight: 300;
+}
+
+/* Timeline statut */
+.od-timeline { display: flex; flex-direction: column; gap: 0; }
+.od-step {
+  display: flex; gap: 14px; align-items: flex-start; position: relative;
+}
+.od-step:not(:last-child)::after {
+  content: ''; position: absolute; left: 9px; top: 22px;
+  width: 2px; height: calc(100% + 4px);
+  background: var(--line);
+}
+.od-step.done::after { background: var(--green); }
+.od-dot {
+  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--line); background: white; margin-top: 2px;
+  position: relative; z-index: 1;
+}
+.od-step.done .od-dot { background: var(--green); border-color: var(--green); }
+.od-step.current .od-dot { background: var(--navy); border-color: var(--navy); }
+.od-step-label {
+  font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700;
+  color: var(--ink-4); padding-bottom: 20px;
+}
+.od-step.done .od-step-label, .od-step.current .od-step-label { color: var(--ink); }
+
+@media (max-width: 768px) {
+  .od-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% with STATUS_ORDER="PENDING,CONFIRMED,READY,DELIVERED" %}
+
+<section class="od-hero">
+  <div class="od-hero-glow"></div>
+  <div class="container">
+    <div class="od-hero-inner afu">
+      <div style="font-family:'Syne',sans-serif;font-size:0.72rem;color:rgba(255,255,255,0.4);margin-bottom:14px;">
+        <a href="{% url 'orders:order_list' %}" style="color:inherit;text-decoration:none;">
+          ← Retour aux commandes
+        </a>
+      </div>
+      <div class="od-title">Commande <em>#{{ order.id }}</em></div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span class="od-badge badge-{{ order.status }}">{{ order.get_status_display }}</span>
+        <span style="font-size:0.8rem;color:rgba(255,255,255,0.45);">
+          {{ order.created_at|date:"d F Y à H:i" }}
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--sand);padding:48px 0;">
+  <div class="container" style="max-width:1000px;">
+
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" style="margin-bottom:16px;">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="od-grid">
+
+      <!-- COLONNE GAUCHE -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <!-- Articles -->
+        <div class="od-card afu">
+          <div class="od-section-title">Articles commandés</div>
+          {% for item in order.items.all %}
+          <div class="od-item-row">
+            <div>
+              <div class="od-item-name">{{ item.medication.name }}</div>
+              <div class="od-item-qty">{{ item.quantity }} × {{ item.unit_price }} FCFA</div>
+            </div>
+            <div class="od-item-price">{{ item.subtotal }} FCFA</div>
+          </div>
+          {% endfor %}
+          <div class="od-total-row">
+            <span class="od-total-label">Total</span>
+            <span class="od-total-val">{{ order.total_amount }} FCFA</span>
+          </div>
+        </div>
+
+        <!-- Note patient -->
+        {% if order.note %}
+        <div class="od-card afu">
+          <div class="od-section-title">Note</div>
+          <p style="font-size:0.9rem;color:var(--ink-3);line-height:1.7;margin:0;">
+            {{ order.note }}
+          </p>
+        </div>
+        {% endif %}
+
+        <!-- Paiement -->
+        {% if order.payment %}
+        <div class="od-card afu">
+          <div class="od-section-title">Paiement</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;font-size:0.9rem;">{{ order.payment.get_method_display }}</div>
+              {% if order.payment.transaction_id %}
+              <div style="font-size:0.75rem;color:var(--ink-4);">TXN : {{ order.payment.transaction_id }}</div>
+              {% endif %}
+            </div>
+            <span class="od-badge badge-{{ order.payment.status }}">
+              {{ order.payment.get_status_display }}
+            </span>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="afu" style="display:flex;gap:10px;flex-wrap:wrap;">
+          {% if request.user == order.patient and order.is_cancellable %}
+          <a href="{% url 'orders:order_cancel' order.id %}" class="btn btn-outline"
+             style="border-color:#d9534f;color:#d9534f;">
+            Annuler la commande
+          </a>
+          {% endif %}
+
+          {% if request.user.role == "PHARMACIST" and request.user.pharmacy == order.pharmacy %}
+          <a href="{% url 'orders:order_status_update' order.id %}" class="btn btn-primary">
+            Changer le statut →
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- COLONNE DROITE -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <!-- Pharmacie -->
+        <div class="od-card afu">
+          <div class="od-section-title">Pharmacie</div>
+          <div style="font-weight:700;font-size:0.95rem;color:var(--ink);margin-bottom:4px;">
+            {{ order.pharmacy.name }}
+          </div>
+          <div style="font-size:0.8rem;color:var(--ink-4);line-height:1.6;">
+            {{ order.pharmacy.address }}, {{ order.pharmacy.city }}<br>
+            {{ order.pharmacy.phone }}
+          </div>
+          <a href="{% url 'pharmacies:pharmacy_detail' order.pharmacy.id %}"
+             class="btn btn-outline btn-sm" style="margin-top:14px;">
+            Voir la pharmacie →
+          </a>
+        </div>
+
+        <!-- Timeline statut -->
+        <div class="od-card afu">
+          <div class="od-section-title">Suivi</div>
+          {% with steps="PENDING,CONFIRMED,READY,DELIVERED" %}
+          <div class="od-timeline">
+            {% for step_val in steps|split:"," %}
+            {% with labels="En attente,Confirmée,Prête,Livrée" %}
+            {% for label in labels|split:"," %}{% if forloop.counter == forloop.parentloop.counter %}
+            <div class="od-step
+              {% if order.status == step_val %}current
+              {% elif order.status == 'DELIVERED' %}done
+              {% elif step_val == 'PENDING' and order.status != 'CANCELLED' %}done
+              {% elif step_val == 'CONFIRMED' and order.status in 'CONFIRMED,READY,DELIVERED' %}done
+              {% elif step_val == 'READY' and order.status in 'READY,DELIVERED' %}done
+              {% endif %}">
+              <div class="od-dot"></div>
+              <div class="od-step-label">{{ label }}</div>
+            </div>
+            {% endif %}{% endfor %}
+            {% endwith %}
+            {% endfor %}
+          </div>
+          {% endwith %}
+          {% if order.status == "CANCELLED" %}
+          <div style="margin-top:12px;font-family:'Syne',sans-serif;font-size:0.8rem;
+                      color:#721c24;background:#f8d7da;padding:8px 12px;border-radius:var(--r);">
+            Cette commande a été annulée.
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endwith %}
+{% endblock %}

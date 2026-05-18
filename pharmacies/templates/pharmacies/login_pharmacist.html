@@ -1,0 +1,495 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Espace professionnel — PharMap{% endblock %}
+{% block meta_description %}Connectez-vous à votre espace pharmacien PharMap pour gérer votre stock et vos réservations.{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ════════════════════════════════════
+   LOGIN PHARMACIST — préfixe .lph-
+════════════════════════════════════ */
+
+.lph-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 480px 1fr;
+  background: var(--sand);
+}
+
+/* ── Cache la navbar globale — cette page a son propre branding ── */
+#mainNavbar,
+.bottom-nav { display: none !important; }
+
+/* ── Panneau gauche (formulaire) ── */
+.lph-form-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 48px;
+  background: white;
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  position: relative;
+  z-index: 2;
+  box-shadow: var(--sh-3);
+}
+.lph-form-inner { width: 100%; max-width: 380px; }
+
+/* Logo */
+.lph-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; margin-bottom: 40px;
+}
+.lph-logo-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px rgba(12,31,63,0.3);
+}
+.lph-logo-name {
+  font-family: 'Fraunces', serif;
+  font-size: 1.25rem; color: var(--navy); font-weight: 300;
+  letter-spacing: -0.5px;
+}
+.lph-logo-name em { color: var(--green); font-style: normal; }
+
+/* Badge "Espace pro" */
+.lph-pro-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--navy-pale);
+  border: 1px solid var(--navy-tint);
+  color: var(--navy);
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.lph-pro-badge-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+}
+
+.lph-header { margin-bottom: 32px; }
+.lph-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.9rem; font-weight: 300;
+  color: var(--ink); letter-spacing: -0.8px; line-height: 1.15;
+}
+.lph-title em { font-style: italic; color: var(--navy); }
+.lph-sub {
+  font-size: 0.84rem; color: var(--ink-4);
+  line-height: 1.7; margin-top: 8px;
+}
+
+/* Champs */
+.lph-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.lph-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--ink-3);
+}
+.lph-input {
+  width: 100%; padding: 12px 14px;
+  background: var(--sand);
+  border: 1.5px solid var(--line-2);
+  border-radius: var(--r-sm);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem; color: var(--ink);
+  outline: none; transition: var(--t); box-sizing: border-box;
+}
+.lph-input:focus {
+  border-color: var(--navy); background: white;
+  box-shadow: 0 0 0 3px rgba(12,31,63,0.08);
+}
+.lph-input::placeholder { color: var(--ink-5); }
+.lph-input.is-error { border-color: #C53030; background: #FFF5F5; }
+
+.lph-pw-wrap { position: relative; }
+.lph-pw-toggle {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-4); padding: 4px;
+  display: flex; align-items: center; transition: var(--t);
+}
+.lph-pw-toggle:hover { color: var(--navy); }
+
+/* Messages */
+.lph-messages { margin-bottom: 20px; }
+.lph-msg {
+  padding: 10px 14px; border-radius: var(--r-sm);
+  font-size: 0.82rem; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.lph-msg-error   { background: #FFF5F5; color: #C53030; border: 1px solid #FDDCDC; }
+.lph-msg-success { background: #F0FBF7; color: #1A7A5E; border: 1px solid #C8EFE3; }
+
+.lph-forgot {
+  text-align: right; margin-top: -10px; margin-bottom: 22px;
+}
+.lph-forgot a {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 600;
+  color: var(--ink-4); text-decoration: none; transition: var(--t);
+}
+.lph-forgot a:hover { color: var(--navy); }
+
+/* Submit */
+.lph-submit {
+  width: 100%; padding: 14px;
+  background: var(--navy); color: white;
+  border: none; border-radius: var(--r-sm);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; transition: var(--t);
+  box-shadow: 0 4px 14px rgba(12,31,63,0.3);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.lph-submit:hover {
+  background: var(--green);
+  box-shadow: 0 8px 24px rgba(26,122,94,0.38);
+  transform: translateY(-1px);
+}
+
+/* Divider */
+.lph-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 24px 0;
+}
+.lph-divider-line { flex: 1; height: 1px; background: var(--line); }
+.lph-divider-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 600; color: var(--ink-5);
+}
+
+/* Lien patient */
+.lph-patient-link {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px;
+  background: var(--sand);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  transition: var(--t);
+}
+.lph-patient-link:hover { border-color: var(--navy-tint); background: var(--navy-pale); }
+.lph-patient-link-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem; font-weight: 600; color: var(--ink);
+}
+.lph-patient-link-sub {
+  font-size: 0.7rem; color: var(--ink-4); margin-top: 1px;
+}
+.lph-patient-link-arr {
+  color: var(--ink-4); font-size: 1.1rem;
+}
+
+/* Inscription */
+.lph-register-link {
+  margin-top: 28px; text-align: center;
+  font-size: 0.82rem; color: var(--ink-4);
+}
+.lph-register-link a {
+  color: var(--navy); font-weight: 600; text-decoration: none;
+}
+.lph-register-link a:hover { text-decoration: underline; }
+
+/* ── Panneau droit (dashboard preview) ── */
+.lph-visual {
+  background: var(--navy);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 64px 56px;
+}
+.lph-visual-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 50% 55% at 80% 90%, rgba(26,122,94,0.22) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 40% at 10% 10%, rgba(184,132,28,0.1) 0%, transparent 65%);
+}
+.lph-visual-content { position: relative; z-index: 1; }
+
+.lph-visual-eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 1.6px; text-transform: uppercase;
+  color: rgba(255,255,255,0.35); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.lph-visual-eyebrow-bar { width: 18px; height: 2px; background: var(--gold-2); border-radius: 2px; }
+
+.lph-visual-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(1.8rem, 2.5vw, 2.6rem);
+  color: white; font-weight: 300;
+  letter-spacing: -0.8px; line-height: 1.14;
+  margin-bottom: 40px;
+}
+.lph-visual-title em { font-style: italic; color: #6EDCBC; }
+
+/* Fausses stats dashboard */
+.lph-dash-preview {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin-bottom: 36px;
+}
+.lph-dash-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--r);
+  padding: 20px;
+  backdrop-filter: blur(8px);
+}
+.lph-dash-card-val {
+  font-family: 'Fraunces', serif;
+  font-size: 1.9rem; color: white; font-weight: 300;
+  letter-spacing: -0.5px; margin-bottom: 4px;
+}
+.lph-dash-card-val em { color: #6EDCBC; font-style: normal; }
+.lph-dash-card-lbl {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem; font-weight: 600;
+  color: rgba(255,255,255,0.38); text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.lph-dash-card-trend {
+  margin-top: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem; font-weight: 600;
+  color: #6EDCBC;
+}
+
+/* Features */
+.lph-features { display: flex; flex-direction: column; gap: 16px; }
+.lph-feature  { display: flex; align-items: flex-start; gap: 13px; }
+.lph-feature-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: rgba(255,255,255,0.07);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.lph-feature-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem; font-weight: 700;
+  color: rgba(255,255,255,0.75); margin-bottom: 3px;
+}
+.lph-feature-desc {
+  font-size: 0.75rem; color: rgba(255,255,255,0.38); line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 1020px) {
+  .lph-page { grid-template-columns: 1fr; }
+  .lph-visual { display: none; }
+  .lph-form-panel { box-shadow: none; border-right: none; padding: 40px 24px; }
+}
+</style>
+{% endblock %}
+
+{% block main_class %}page-content-flush{% endblock %}
+
+{% block content %}
+<div class="lph-page">
+
+  <!-- ══ PANNEAU GAUCHE : FORMULAIRE ══ -->
+  <div class="lph-form-panel">
+    <div class="lph-form-inner">
+
+      <!-- Logo -->
+      <a href="{% url 'home' %}" class="lph-logo">
+        <div class="lph-logo-icon">
+          <img src="{% static 'icons/symbole-logo.png' %}" width="20" height="20" alt="PharMap" />
+        </div>
+        <span class="lph-logo-name">Phar<em>Map</em></span>
+      </a>
+
+      <!-- Badge pro -->
+      <div class="lph-pro-badge">
+        <div class="lph-pro-badge-dot"></div>
+        Espace professionnel
+      </div>
+
+      <div class="lph-header">
+        <h1 class="lph-title">Accès à votre<br /><em>tableau de bord</em></h1>
+        <p class="lph-sub">
+          Gérez votre stock, vos réservations et
+          suivez vos performances en temps réel.
+        </p>
+      </div>
+
+      {% if messages %}
+        <div class="lph-messages">
+          {% for msg in messages %}
+            <div class="lph-msg {% if msg.tags == 'error' %}lph-msg-error{% else %}lph-msg-success{% endif %}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                {% if msg.tags == 'error' %}
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                {% else %}
+                  <polyline points="20 6 9 17 4 12"/>
+                {% endif %}
+              </svg>
+              {{ msg }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="POST" novalidate>
+        {% csrf_token %}
+
+        <div class="lph-field">
+          <label class="lph-label" for="lph_email">Email professionnel</label>
+          <input class="lph-input" type="email" id="lph_email" name="email"
+                 value="{{ request.POST.email|default:'' }}"
+                 placeholder="contact@mapharmacie.ga"
+                 autocomplete="email" required />
+        </div>
+
+        <div class="lph-field">
+          <label class="lph-label" for="lph_password">Mot de passe</label>
+          <div class="lph-pw-wrap">
+            <input class="lph-input" type="password" id="lph_password" name="password"
+                   placeholder="Votre mot de passe"
+                   autocomplete="current-password" required />
+            <button type="button" class="lph-pw-toggle" onclick="lphTogglePw()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="lph-forgot">
+          <a href="#">Mot de passe oublié ?</a>
+        </div>
+
+        <button type="submit" class="lph-submit">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          Accéder au dashboard
+        </button>
+      </form>
+
+      <div class="lph-divider">
+        <div class="lph-divider-line"></div>
+        <div class="lph-divider-text">Vous êtes patient ?</div>
+        <div class="lph-divider-line"></div>
+      </div>
+
+      <a href="{% url 'auth_user:login' %}" class="lph-patient-link">
+        <div>
+          <div class="lph-patient-link-text">Espace patient</div>
+          <div class="lph-patient-link-sub">Trouvez vos médicaments près de vous</div>
+        </div>
+        <span class="lph-patient-link-arr">→</span>
+      </a>
+
+      <div class="lph-register-link">
+        Pas encore de compte ?
+        <a href="{% url 'auth_user:register_pharmacist' %}">Inscrire ma pharmacie</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ PANNEAU DROIT : PREVIEW DASHBOARD ══ -->
+  <div class="lph-visual">
+    <div class="lph-visual-glow"></div>
+    <div class="lph-visual-content">
+
+      <div class="lph-visual-eyebrow">
+        <div class="lph-visual-eyebrow-bar"></div>
+        Tableau de bord pharmacien
+      </div>
+
+      <h2 class="lph-visual-title">
+        Pilotez votre pharmacie<br />avec <em>précision</em>
+      </h2>
+
+      <!-- Stats preview -->
+      <div class="lph-dash-preview">
+        <div class="lph-dash-card">
+          <div class="lph-dash-card-val">24<em>k</em></div>
+          <div class="lph-dash-card-lbl">Vues ce mois</div>
+          <div class="lph-dash-card-trend">↑ +18% vs mois dernier</div>
+        </div>
+        <div class="lph-dash-card">
+          <div class="lph-dash-card-val">138</div>
+          <div class="lph-dash-card-lbl">Réservations</div>
+          <div class="lph-dash-card-trend">↑ +34% vs mois dernier</div>
+        </div>
+        <div class="lph-dash-card">
+          <div class="lph-dash-card-val">4.8</div>
+          <div class="lph-dash-card-lbl">Note moyenne</div>
+          <div class="lph-dash-card-trend">★★★★★</div>
+        </div>
+        <div class="lph-dash-card">
+          <div class="lph-dash-card-val">312</div>
+          <div class="lph-dash-card-lbl">Produits en stock</div>
+          <div class="lph-dash-card-trend">5 alertes rupture</div>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="lph-features">
+        <div class="lph-feature">
+          <div class="lph-feature-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6EDCBC" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          </div>
+          <div>
+            <div class="lph-feature-title">Gestion de stock en temps réel</div>
+            <div class="lph-feature-desc">Mettez à jour vos disponibilités, prix et alertes de rupture depuis une interface simple.</div>
+          </div>
+        </div>
+        <div class="lph-feature">
+          <div class="lph-feature-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6EDCBC" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="lph-feature-title">Réservations & notifications</div>
+            <div class="lph-feature-desc">Recevez les commandes patients et confirmez en un clic, avec paiement Airtel Money.</div>
+          </div>
+        </div>
+        <div class="lph-feature">
+          <div class="lph-feature-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6EDCBC" stroke-width="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+          </div>
+          <div>
+            <div class="lph-feature-title">Statistiques & performances</div>
+            <div class="lph-feature-desc">Suivez vos ventes, vos produits les plus recherchés et votre taux de conversion.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function lphTogglePw() {
+  var input = document.getElementById('lph_password');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+</script>
+{% endblock %}

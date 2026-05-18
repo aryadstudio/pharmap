@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Avis — {{ pharmacy.name }} — PharMap{% endblock %}
+
+{% block extra_css %}
+<style>
+.rv-hero {
+  background: var(--navy);
+  padding: 72px 0 52px; position: relative; overflow: hidden;
+}
+.rv-hero-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 50% 70% at 10% 60%, rgba(26,122,94,0.14) 0%, transparent 70%);
+}
+.rv-hero-inner { position: relative; z-index: 1; }
+.rv-hero-breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Syne', sans-serif; font-size: 0.72rem;
+  color: rgba(255,255,255,0.4); margin-bottom: 20px;
+}
+.rv-hero-breadcrumb a { color: rgba(255,255,255,0.4); text-decoration: none; }
+.rv-hero-breadcrumb a:hover { color: white; }
+.rv-hero-name {
+  font-family: 'Fraunces', serif; font-size: clamp(1.8rem, 3vw, 2.6rem);
+  color: white; font-weight: 300; margin-bottom: 12px;
+}
+.rv-hero-name em { font-style: italic; color: #6EDCBC; }
+
+.rv-summary {
+  background: white; border-radius: var(--r-xl);
+  border: 1px solid var(--line); padding: 36px;
+  display: grid; grid-template-columns: auto 1fr; gap: 40px;
+  align-items: center; margin-bottom: 32px;
+}
+.rv-summary-big {
+  text-align: center; padding-right: 40px;
+  border-right: 1px solid var(--line);
+}
+.rv-big-val {
+  font-family: 'Fraunces', serif; font-size: 5rem;
+  color: var(--navy); line-height: 1; letter-spacing: -2px; font-weight: 300;
+}
+.rv-big-stars { color: var(--gold-2); font-size: 1.4rem; letter-spacing: 2px; }
+.rv-big-count { font-family: 'Syne', sans-serif; font-size: 0.72rem; color: var(--ink-4); margin-top: 4px; }
+
+.rv-bars { display: flex; flex-direction: column; gap: 8px; }
+.rv-bar-row {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--ink-3);
+}
+.rv-bar-track {
+  flex: 1; height: 7px; background: var(--sand-2); border-radius: 999px; overflow: hidden;
+}
+.rv-bar-fill { height: 100%; background: var(--gold-2); border-radius: 999px; transition: width 0.8s var(--ease); }
+.rv-bar-pct { width: 36px; text-align: right; font-size: 0.7rem; color: var(--ink-4); }
+
+.rv-list { display: flex; flex-direction: column; gap: 16px; }
+.rv-card {
+  background: white; border-radius: var(--r-lg);
+  border: 1px solid var(--line); padding: 28px;
+  transition: var(--t);
+}
+.rv-card:hover { box-shadow: var(--sh-1); }
+.rv-card-header {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 14px;
+}
+.rv-author { display: flex; align-items: center; gap: 12px; }
+.rv-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--navy-pale); display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--navy);
+}
+.rv-name { font-family: 'Syne', sans-serif; font-size: 0.875rem; font-weight: 700; color: var(--ink); }
+.rv-date { font-size: 0.7rem; color: var(--ink-4); margin-top: 2px; }
+.rv-text { font-size: 0.9rem; color: var(--ink-3); line-height: 1.8; }
+.rv-mine-badge {
+  font-family: 'Syne', sans-serif; font-size: 0.65rem; font-weight: 700;
+  background: var(--navy-pale); color: var(--navy);
+  padding: 3px 8px; border-radius: 999px; letter-spacing: 0.04em;
+}
+
+.rv-form-card {
+  background: white; border-radius: var(--r-xl);
+  border: 1px solid var(--line); padding: 40px;
+  margin-top: 32px;
+}
+.rv-form-title {
+  font-family: 'Fraunces', serif; font-size: 1.4rem;
+  color: var(--ink); font-weight: 400; margin-bottom: 24px;
+}
+.rv-star-picker { display: flex; gap: 6px; margin-bottom: 20px; }
+.rv-star-btn {
+  font-size: 2rem; color: var(--sand-3);
+  cursor: pointer; transition: var(--t);
+  background: none; border: none; padding: 2px; line-height: 1;
+}
+.rv-star-btn:hover, .rv-star-btn.on { color: var(--gold-2); }
+
+.rv-already {
+  background: var(--navy-pale); border-radius: var(--r-lg);
+  border: 1px solid var(--line); padding: 28px; margin-top: 32px;
+}
+
+@media (max-width: 640px) {
+  .rv-summary { grid-template-columns: 1fr; }
+  .rv-summary-big { padding-right: 0; border-right: none; border-bottom: 1px solid var(--line); padding-bottom: 24px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="rv-hero">
+  <div class="rv-hero-glow"></div>
+  <div class="container">
+    <div class="rv-hero-inner afu">
+      <div class="rv-hero-breadcrumb">
+        <a href="{% url 'home' %}">Accueil</a>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <a href="{% url 'pharmacies:pharmacy_list' %}">Pharmacies</a>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <a href="{% url 'pharmacies:pharmacy_detail' pharmacy.id %}">{{ pharmacy.name }}</a>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>Avis</span>
+      </div>
+      <h1 class="rv-hero-name">
+        Avis clients · <em>{{ pharmacy.name }}</em>
+      </h1>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="color:var(--gold-2);font-size:1rem;">
+          {% for i in "12345" %}{% if forloop.counter <= pharmacy.average_rating|floatformat:"0"|add:"0" %}★{% else %}☆{% endif %}{% endfor %}
+        </span>
+        <span style="font-family:'Fraunces',serif;font-size:1.1rem;color:white;">
+          {{ pharmacy.average_rating|floatformat:1 }}
+        </span>
+        <span style="font-size:.82rem;color:rgba(255,255,255,0.45);">
+          — {{ pharmacy.total_reviews }} avis
+        </span>
+        <a href="{% url 'pharmacies:pharmacy_detail' pharmacy.id %}"
+           class="btn btn-outline btn-sm"
+           style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.2);">
+          ← Retour à la pharmacie
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--sand); padding: 52px 0;">
+  <div class="container" style="max-width:900px;">
+
+    <!-- MESSAGES DJANGO -->
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} afu" style="margin-bottom:16px;">
+        {{ message }}
+      </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- RÉSUMÉ -->
+    <div class="rv-summary afu">
+      <div class="rv-summary-big">
+        <div class="rv-big-val">{{ pharmacy.average_rating|floatformat:1 }}</div>
+        <div class="rv-big-stars">★★★★★</div>
+        <div class="rv-big-count">{{ total }} avis</div>
+      </div>
+      <div class="rv-bars">
+        {% for item in distribution %}
+        <div class="rv-bar-row">
+          <span>{{ item.star }}★</span>
+          <div class="rv-bar-track">
+            <div class="rv-bar-fill" style="width:{{ item.pct }}%;"></div>
+          </div>
+          <span class="rv-bar-pct">{{ item.pct }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- LISTE AVIS -->
+    {% if reviews %}
+    <div class="rv-list">
+      {% for review in reviews %}
+      <div class="rv-card afu">
+        <div class="rv-card-header">
+          <div class="rv-author">
+            <div class="rv-avatar">
+              {{ review.patient.first_name.0|default:"?" }}{{ review.patient.last_name.0|default:"" }}
+            </div>
+            <div>
+              <div class="rv-name">
+                {{ review.patient.get_full_name|default:review.patient.username }}
+                {% if request.user == review.patient %}
+                  <span class="rv-mine-badge">Mon avis</span>
+                {% endif %}
+              </div>
+              <div class="rv-date">{{ review.created_at|date:"d F Y" }}</div>
+            </div>
+          </div>
+          <div style="color:var(--gold-2);font-size:1.1rem;letter-spacing:2px;">
+            {% for i in "12345" %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}
+          </div>
+        </div>
+        {% if review.comment %}
+        <p class="rv-text">{{ review.comment }}</p>
+        {% else %}
+        <p class="rv-text" style="color:var(--ink-4);font-style:italic;">Aucun commentaire.</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div style="background:white;border-radius:var(--r-xl);border:1px solid var(--line);padding:60px;text-align:center;" class="afu">
+      <div style="font-family:'Fraunces',serif;font-size:1.4rem;color:var(--ink);margin-bottom:10px;">
+        Pas encore d'avis
+      </div>
+      <p class="text-muted">Soyez le premier à partager votre expérience.</p>
+    </div>
+    {% endif %}
+
+    <!-- FORMULAIRE -->
+    {% if user.is_authenticated %}
+      {% if user_review %}
+      <div class="rv-already afu">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--navy);margin-bottom:6px;">
+          Vous avez déjà laissé un avis
+        </div>
+        <div style="color:var(--gold-2);font-size:1.1rem;letter-spacing:2px;margin-bottom:8px;">
+          {% for i in "12345" %}{% if forloop.counter <= user_review.rating %}★{% else %}☆{% endif %}{% endfor %}
+        </div>
+        {% if user_review.comment %}
+        <p style="font-size:0.9rem;color:var(--ink-3);">{{ user_review.comment }}</p>
+        {% endif %}
+      </div>
+
+      {% else %}
+      <div class="rv-form-card afu">
+        <div class="rv-form-title">Laisser un avis</div>
+        <form method="POST">
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label">Votre note</label>
+            <div class="rv-star-picker" id="starPicker">
+              {% for i in "12345" %}
+              <button type="button" class="rv-star-btn"
+                      data-val="{{ forloop.counter }}"
+                      onclick="setRating({{ forloop.counter }})">★</button>
+              {% endfor %}
+            </div>
+            <input type="hidden" name="rating" id="ratingInput" value="0" />
+            <div id="ratingError" style="color:#e74c3c;font-size:0.8rem;display:none;margin-top:4px;">
+              Veuillez sélectionner une note.
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Votre commentaire <span style="color:var(--ink-4);font-weight:400;">(optionnel)</span></label>
+            <textarea name="comment" class="form-control" rows="4"
+                      placeholder="Décrivez votre expérience : stock, accueil, rapidité de service…"
+                      style="resize:vertical;"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            Publier mon avis →
+          </button>
+        </form>
+      </div>
+      {% endif %}
+
+    {% else %}
+    <div style="background:white;border-radius:var(--r-lg);border:1px solid var(--line);padding:28px;margin-top:32px;text-align:center;" class="afu">
+      <p class="text-muted" style="margin-bottom:16px;">Connectez-vous pour laisser un avis.</p>
+      <a href="{% url 'auth_user:login' %}?next={{ request.path }}" class="btn btn-primary">
+        Se connecter →
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setRating(val) {
+  document.getElementById('ratingInput').value = val;
+  document.getElementById('ratingError').style.display = 'none';
+  document.querySelectorAll('.rv-star-btn').forEach((btn, i) => {
+    btn.classList.toggle('on', i < val);
+  });
+}
+
+// Validation côté client avant soumission
+const form = document.querySelector('.rv-form-card form');
+if (form) {
+  form.addEventListener('submit', function(e) {
+    const rating = parseInt(document.getElementById('ratingInput').value);
+    if (!rating || rating < 1 || rating > 5) {
+      e.preventDefault();
+      document.getElementById('ratingError').style.display = 'block';
+      document.getElementById('starPicker').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+}
+</script>
+{% endblock %}

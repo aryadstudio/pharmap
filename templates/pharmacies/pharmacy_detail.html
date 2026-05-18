@@ -1,0 +1,1303 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ pharmacy.name }} — PharMap{% endblock %}
+{% block meta_description %}{{ pharmacy.name }} à {{ pharmacy.city }} — Consultez le stock en temps réel, les horaires et les avis.{% endblock %}
+
+{% block extra_css %}
+<style>
+
+/* ════════════════════════════════════════
+   HERO PHARMACIE
+   Préfixe : .pd- (pharmacy detail)
+   → aucun conflit avec .pl- .sr- du base
+════════════════════════════════════════ */
+.pd-hero {
+  background: var(--navy);
+  padding: 72px 0 0;
+  position: relative;
+  overflow: hidden;
+}
+.pd-hero-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 80% at 0% 100%, rgba(26,122,94,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 55% at 100% 0%,  rgba(184,132,28,0.10) 0%, transparent 60%);
+}
+
+.pd-hero-inner {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 48px;
+  align-items: flex-start;
+  padding-bottom: 40px;
+}
+
+/* ── Logo / avatar pharmacie ── */
+.pd-logo-wrap {
+  width: 72px; height: 72px;
+  border-radius: var(--r);
+  background: white;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+}
+.pd-logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+
+.pd-breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 600;
+  color: rgba(255,255,255,0.38);
+  margin-bottom: 16px;
+}
+.pd-breadcrumb a { color: rgba(255,255,255,0.38); text-decoration: none; transition: var(--t); }
+.pd-breadcrumb a:hover { color: rgba(255,255,255,0.7); }
+.pd-breadcrumb-sep { opacity: 0.4; }
+
+.pd-hero-name {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  color: white; line-height: 1.1;
+  letter-spacing: -1px; font-weight: 300;
+  margin-bottom: 12px;
+}
+
+.pd-hero-meta {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 16px; margin-bottom: 24px;
+}
+.pd-hero-meta-item {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem; font-weight: 500;
+  color: rgba(255,255,255,0.52);
+}
+.pd-hero-meta-item svg { opacity: 0.6; flex-shrink: 0; }
+.pd-hero-meta-item strong { color: rgba(255,255,255,0.82); }
+
+.pd-hero-badges {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 28px;
+}
+
+/* Badge "Ouvert maintenant" avec dot animé */
+.pd-open-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(26,122,94,0.22);
+  border: 1px solid rgba(34,160,124,0.38);
+  color: #6EDCBC;
+  padding: 6px 14px; border-radius: 999px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem; font-weight: 700;
+}
+.pd-open-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #22A07C;
+  animation: pdOpenPulse 2s ease-in-out infinite;
+}
+@keyframes pdOpenPulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.5; transform:scale(.75); }
+}
+
+.pd-hero-actions {
+  display: flex; gap: 10px; flex-wrap: wrap;
+}
+
+/* ── Side card (droite du hero) ── */
+.pd-hero-side {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  min-width: 260px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.pd-side-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.4px;
+  color: rgba(255,255,255,0.38);
+  margin-bottom: 4px;
+}
+.pd-side-val {
+  font-family: 'Fraunces', serif;
+  font-size: 1.5rem; color: white;
+  line-height: 1; letter-spacing: -0.3px;
+}
+.pd-side-val span { color: #6EDCBC; }
+.pd-side-sub {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem; color: rgba(255,255,255,0.38);
+  margin-top: 3px;
+}
+.pd-side-divider { height: 1px; background: rgba(255,255,255,0.08); }
+.pd-side-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem; color: rgba(255,255,255,0.52);
+}
+.pd-side-row strong { color: rgba(255,255,255,0.82); font-weight: 700; }
+
+/* ── Onglets de navigation ── */
+.pd-tabs {
+  background: rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex; gap: 0;
+  position: relative; z-index: 1;
+}
+.pd-tab {
+  padding: 16px 24px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem; font-weight: 600;
+  color: rgba(255,255,255,0.42);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  transition: var(--t);
+  cursor: pointer; white-space: nowrap;
+}
+.pd-tab:hover  { color: rgba(255,255,255,0.75); }
+.pd-tab.active { color: white; border-bottom-color: #6EDCBC; }
+
+/* ════════════════════════════════════════
+   LAYOUT PRINCIPAL
+════════════════════════════════════════ */
+.pd-body {
+  background: var(--sand);
+  padding: 40px 0 80px;
+}
+.pd-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+/* ════════════════════════════════════════
+   SECTION GÉNÉRIQUES
+════════════════════════════════════════ */
+.pd-section {
+  background: white;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.pd-section-head {
+  padding: 20px 24px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 12px;
+}
+.pd-section-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1rem; font-weight: 400; color: var(--ink);
+  display: flex; align-items: center; gap: 10px;
+}
+.pd-section-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.pd-section-count {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 999px;
+  background: var(--navy-pale); color: var(--navy);
+}
+
+/* ════════════════════════════════════════
+   RECHERCHE DANS LES STOCKS
+════════════════════════════════════════ */
+.pd-stock-search {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--sand);
+}
+.pd-stock-field {
+  display: flex; align-items: center; gap: 9px;
+  background: white;
+  border: 1.5px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 9px 13px;
+  transition: var(--t);
+}
+.pd-stock-field:focus-within {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(12,31,63,0.08);
+}
+.pd-stock-field input {
+  border: none; outline: none; background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem; color: var(--ink); width: 100%;
+}
+.pd-stock-field input::placeholder { color: var(--ink-5); }
+
+/* ════════════════════════════════════════
+   TABLEAU STOCKS
+════════════════════════════════════════ */
+.pd-stock-table {
+  width: 100%; border-collapse: collapse;
+}
+.pd-stock-table thead tr {
+  background: var(--sand);
+  border-bottom: 1px solid var(--line);
+}
+.pd-stock-table th {
+  padding: 10px 24px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--ink-4); text-align: left;
+  white-space: nowrap;
+}
+.pd-stock-table th:last-child { text-align: right; }
+
+.pd-stock-row {
+  border-bottom: 1px solid var(--line);
+  transition: var(--t);
+}
+.pd-stock-row:last-child { border-bottom: none; }
+.pd-stock-row:hover { background: var(--navy-pale); }
+
+.pd-stock-table td {
+  padding: 14px 24px;
+  vertical-align: middle;
+}
+.pd-stock-table td:last-child { text-align: right; }
+
+.pd-stock-med-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.86rem; font-weight: 700; color: var(--ink);
+  margin-bottom: 3px;
+}
+.pd-stock-med-cat {
+  font-size: 0.7rem; color: var(--ink-4);
+  display: flex; align-items: center; gap: 4px;
+}
+.pd-stock-med-img {
+  width: 42px; height: 42px; border-radius: 8px;
+  background: var(--sand);
+  object-fit: contain;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.pd-qty-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 700;
+  padding: 4px 10px; border-radius: 999px;
+}
+.pd-qty-high   { background: var(--green-pale); color: var(--green);  border: 1px solid var(--green-tint); }
+.pd-qty-medium { background: var(--gold-pale);  color: var(--gold);   border: 1px solid #E8D190; }
+.pd-qty-low    { background: #FEF2F2;           color: #C53030;       border: 1px solid #FEB2B2; }
+
+.pd-price {
+  font-family: 'Fraunces', serif;
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--navy); line-height: 1;
+}
+.pd-price-currency {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem; font-weight: 500;
+  color: var(--ink-4); margin-left: 2px;
+}
+
+/* État vide stocks */
+.pd-stock-empty {
+  padding: 52px 24px; text-align: center;
+}
+.pd-stock-empty-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--sand-2);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+}
+
+/* Ligne masquée par filtre */
+.pd-stock-row.pd-hidden { display: none; }
+
+/* ════════════════════════════════════════
+   AVIS
+════════════════════════════════════════ */
+.pd-reviews-list {
+  display: flex; flex-direction: column;
+  gap: 0;
+}
+.pd-review-item {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+  transition: var(--t);
+}
+.pd-review-item:last-child { border-bottom: none; }
+.pd-review-item:hover { background: var(--sand); }
+
+.pd-review-top {
+  display: flex; align-items: flex-start;
+  gap: 12px; margin-bottom: 10px;
+}
+.pd-review-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem; font-weight: 700;
+  color: white; flex-shrink: 0;
+}
+.pd-review-author {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.84rem; font-weight: 700; color: var(--ink);
+}
+.pd-review-date {
+  font-size: 0.7rem; color: var(--ink-5); margin-top: 2px;
+}
+.pd-review-stars {
+  margin-left: auto; font-size: 0.9rem;
+  color: var(--gold); letter-spacing: -1px;
+  white-space: nowrap;
+}
+.pd-review-text {
+  font-size: 0.85rem; color: var(--ink-3);
+  line-height: 1.75;
+  font-style: italic;
+}
+
+.pd-reviews-empty {
+  padding: 40px 24px; text-align: center;
+}
+
+/* ════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════ */
+.pd-sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+/* ── Carte localisation ── */
+.pd-map-card {
+  background: white;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.pd-map-container {
+  position: relative;
+  height: 220px;
+}
+
+#detailMap {
+  position: absolute;
+  inset: 0;
+  height: 100% !important;
+  width: 100% !important;
+  z-index: 1;
+}
+/* Surcharges Leaflet sans conflit */
+.pd-map-container .leaflet-popup { z-index: 9000 !important; }
+.pd-map-container .leaflet-popup-content-wrapper {
+  border-radius: var(--r) !important;
+  box-shadow: var(--sh-3) !important;
+  border: 1px solid var(--line) !important;
+  padding: 0 !important; overflow: hidden;
+}
+.pd-map-container .leaflet-popup-content { margin: 0 !important; }
+.pd-map-container .leaflet-popup-tip     { display: none; }
+
+.pd-map-footer {
+  padding: 14px 18px;
+  display: flex; align-items: flex-start; gap: 9px;
+  border-top: 1px solid var(--line);
+}
+.pd-map-addr-icon { margin-top: 2px; flex-shrink: 0; }
+.pd-map-addr-text {
+  font-size: 0.8rem; color: var(--ink-3); line-height: 1.6;
+}
+.pd-map-addr-city {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--navy); margin-top: 2px;
+}
+
+/* ── Infos contact ── */
+.pd-info-card {
+  background: white;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.pd-info-card-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.4px;
+  color: var(--ink-4);
+}
+.pd-info-row {
+  display: flex; align-items: center; gap: 13px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  transition: var(--t);
+}
+.pd-info-row:last-child { border-bottom: none; }
+.pd-info-row:hover      { background: var(--navy-pale); }
+.pd-info-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.pd-info-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--ink-4); margin-bottom: 2px;
+}
+.pd-info-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem; color: var(--ink); font-weight: 500;
+}
+
+/* ── Horaires ── */
+.pd-hours-card {
+  background: white;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.pd-hours-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center;
+  justify-content: space-between;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.4px;
+  color: var(--ink-4);
+}
+.pd-hours-24h {
+  background: var(--green-pale);
+  padding: 20px;
+  display: flex; align-items: center; gap: 12px;
+  color: var(--green);
+}
+.pd-hours-24h-icon {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--green-tint);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.pd-hours-24h-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.88rem; font-weight: 700;
+}
+.pd-hours-24h-sub {
+  font-size: 0.72rem; color: var(--green); opacity: 0.7;
+  margin-top: 2px;
+}
+.pd-hours-row {
+  padding: 10px 20px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.82rem;
+}
+.pd-hours-row:last-child { border-bottom: none; }
+.pd-hours-day  { color: var(--ink-3); font-weight: 500; }
+.pd-hours-time { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--ink); }
+
+/* ── Note globale ── */
+.pd-rating-card {
+  background: var(--navy);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  padding: 24px;
+  position: relative;
+}
+.pd-rating-card::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(26,122,94,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.pd-rating-eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.4px;
+  color: rgba(255,255,255,0.38);
+  margin-bottom: 10px;
+}
+.pd-rating-big {
+  font-family: 'Fraunces', serif;
+  font-size: 3.5rem; color: white;
+  line-height: 1; letter-spacing: -2px;
+}
+.pd-rating-big span { color: #6EDCBC; font-size: 2rem; }
+.pd-rating-stars-row {
+  display: flex; align-items: center; gap: 4px;
+  margin: 6px 0 14px;
+}
+.pd-rating-star {
+  color: var(--gold-2); font-size: 1.1rem;
+}
+.pd-rating-count {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem; color: rgba(255,255,255,0.42);
+  margin-top: 4px;
+}
+.pd-rating-bar-wrap { margin-top: 16px; }
+.pd-rating-bar-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 6px;
+}
+.pd-rating-bar-lbl {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem; font-weight: 700;
+  color: rgba(255,255,255,0.45);
+  width: 14px; text-align: right; flex-shrink: 0;
+}
+.pd-rating-bar-track {
+  flex: 1; height: 5px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 999px; overflow: hidden;
+}
+.pd-rating-bar-fill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, #6EDCBC, #22A07C);
+  transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ════════════════════════════════════════
+   SECTION DESCRIPTION
+════════════════════════════════════════ */
+.pd-desc-text {
+  padding: 22px 24px;
+  font-size: 0.9rem; color: var(--ink-3);
+  line-height: 1.82;
+}
+.pd-desc-empty {
+  padding: 22px 24px;
+  font-size: 0.85rem; color: var(--ink-5);
+  font-style: italic;
+}
+
+/* ════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════ */
+@media (max-width: 1020px) {
+  .pd-layout      { grid-template-columns: 1fr; }
+  .pd-sidebar     { order: -1; }
+  .pd-hero-inner  { grid-template-columns: 1fr; }
+  .pd-hero-side   { display: none; }
+}
+@media (max-width: 768px) {
+  .pd-hero        { padding: 56px 0 0; }
+  .pd-hero-name   { font-size: 1.9rem; }
+  .pd-hero-actions{ flex-direction: column; }
+  .pd-tabs        { overflow-x: auto; scrollbar-width: none; }
+  .pd-tabs::-webkit-scrollbar { display: none; }
+  .pd-tab         { padding: 14px 16px; }
+  .pd-stock-table th:nth-child(3),
+  .pd-stock-table td:nth-child(3) { display: none; } /* masque colonne qté sur mobile */
+  .pd-body        { padding: 24px 0 60px; }
+}
+@media (max-width: 480px) {
+  .pd-stock-table th:nth-child(2),
+  .pd-stock-table td:nth-child(2) { display: none; } /* masque catégorie */
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ════════════════════════════════════════
+     HERO
+════════════════════════════════════════ -->
+<section class="pd-hero">
+  <div class="pd-hero-glow"></div>
+  <div class="container">
+    <div class="pd-hero-inner">
+
+      <!-- Colonne principale -->
+      <div>
+
+        <!-- Fil d'ariane -->
+        <div class="pd-breadcrumb">
+          <a href="{% url 'pharmacies:pharmacy_list' %}">Pharmacies</a>
+          <span class="pd-breadcrumb-sep">›</span>
+          <span style="color:rgba(255,255,255,0.6);">{{ pharmacy.city }}</span>
+          <span class="pd-breadcrumb-sep">›</span>
+          <span style="color:rgba(255,255,255,0.75);">{{ pharmacy.name }}</span>
+        </div>
+
+        <!-- Logo -->
+        <div class="pd-logo-wrap">
+          {% if pharmacy.logo %}
+            <img src="{{ pharmacy.logo.url }}" alt="{{ pharmacy.name }}" />
+          {% else %}
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.5">
+              <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
+              <path d="M3 9l2-5h14l2 5"/>
+              <line x1="12" y1="9" x2="12" y2="20"/>
+              <line x1="3" y1="14" x2="21" y2="14"/>
+            </svg>
+          {% endif %}
+        </div>
+
+        <!-- Nom -->
+        <h1 class="pd-hero-name">{{ pharmacy.name }}</h1>
+
+        <!-- Méta -->
+        <div class="pd-hero-meta">
+          <div class="pd-hero-meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <strong>{{ pharmacy.address }}, {{ pharmacy.city }}</strong>
+          </div>
+          <div class="pd-hero-meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.58 3.44 2 2 0 0 1 3.54 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.4a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <strong>{{ pharmacy.phone }}</strong>
+          </div>
+          {% if pharmacy.email %}
+          <div class="pd-hero-meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <strong>{{ pharmacy.email }}</strong>
+          </div>
+          {% endif %}
+          <div class="pd-hero-meta-item">
+            <span style="color:var(--gold-2); font-size:1rem; line-height:1;">★</span>
+            <strong>{{ pharmacy.average_rating|floatformat:1 }}</strong>
+            <span>({{ pharmacy.total_reviews }} avis)</span>
+          </div>
+        </div>
+
+        <!-- Badges -->
+        <div class="pd-hero-badges">
+          {% if pharmacy.is_verified %}
+            <span class="badge badge-green" style="font-size:.78rem;padding:5px 13px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Pharmacie vérifiée
+            </span>
+          {% endif %}
+          {% if pharmacy.is_open_24h %}
+            <div class="pd-open-badge">
+              <div class="pd-open-dot"></div>
+              Ouvert 24h/24
+            </div>
+          {% else %}
+            <span class="badge badge-navy" style="font-size:.78rem;padding:5px 13px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              {{ pharmacy.opening_time|time:"H:i" }} – {{ pharmacy.closing_time|time:"H:i" }}
+            </span>
+          {% endif %}
+          <span class="badge badge-sand" style="font-size:.78rem;padding:5px 13px;">
+            {{ pharmacy.country }}
+          </span>
+        </div>
+
+        <!-- Actions -->
+        <div class="pd-hero-actions">
+          <a href="tel:{{ pharmacy.phone }}" class="btn btn-green">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.58 3.44 2 2 0 0 1 3.54 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.4a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            Appeler
+          </a>
+          <a href="https://www.google.com/maps/dir/?api=1&destination={{ pharmacy.latitude }},{{ pharmacy.longitude }}"
+             target="_blank" rel="noopener"
+             class="btn btn-outline"
+             style="border-color:rgba(255,255,255,0.2);color:white;background:rgba(255,255,255,0.07);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+            </svg>
+            Itinéraire
+          </a>
+          <a href="{% url 'pharmacies:search' %}" class="btn btn-ghost"
+             style="color:rgba(255,255,255,0.5);">
+            ← Retour à la recherche
+          </a>
+        </div>
+
+      </div>
+
+      <!-- Side card stats -->
+      <div class="pd-hero-side">
+        <div>
+          <div class="pd-side-title">Stock disponible</div>
+          <div class="pd-side-val">{{ stocks|length }}<span>+</span></div>
+          <div class="pd-side-sub">médicaments en stock</div>
+        </div>
+        <div class="pd-side-divider"></div>
+        <div class="pd-side-row">
+          <span>Note moyenne</span>
+          <strong>{{ pharmacy.average_rating|floatformat:1 }} ★</strong>
+        </div>
+        <div class="pd-side-row">
+          <span>Total avis</span>
+          <strong>{{ pharmacy.total_reviews }}</strong>
+        </div>
+        <div class="pd-side-row">
+          <span>Statut</span>
+          {% if pharmacy.is_verified %}
+            <strong style="color:#6EDCBC;">✓ Vérifié</strong>
+          {% else %}
+            <strong style="color:rgba(255,255,255,0.4);">En attente</strong>
+          {% endif %}
+        </div>
+        <div class="pd-side-divider"></div>
+        <a href="tel:{{ pharmacy.phone }}"
+           class="btn btn-green"
+           style="justify-content:center;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.58 3.44 2 2 0 0 1 3.54 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.4a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+          {{ pharmacy.phone }}
+        </a>
+      </div>
+
+    </div><!-- /pd-hero-inner -->
+
+    <!-- Onglets -->
+    <div class="pd-tabs">
+      <a class="pd-tab active" data-target="tab-stock" href="#stock">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:5px;">
+          <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/><path d="M3 9l2-5h14l2 5"/>
+          <line x1="12" y1="9" x2="12" y2="20"/><line x1="3" y1="14" x2="21" y2="14"/>
+        </svg>
+        Stock ({{ stocks|length }})
+      </a>
+      <a class="pd-tab" data-target="tab-reviews" href="#reviews">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:5px;">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        Avis ({{ pharmacy.total_reviews }})
+      </a>
+      {% if pharmacy.description %}
+      <a class="pd-tab" data-target="tab-about" href="#about">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:5px;">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        À propos
+      </a>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     CORPS
+════════════════════════════════════════ -->
+<div class="pd-body">
+  <div class="container">
+    <div class="pd-layout">
+
+      <!-- ══ COLONNE PRINCIPALE ══ -->
+      <div style="min-width:0;">
+
+        <!-- ── TAB STOCK ── -->
+        <div id="tab-stock" class="pd-tab-pane">
+          <div class="pd-section">
+
+            <div class="pd-section-head">
+              <div class="pd-section-title">
+                <div class="pd-section-icon" style="background:var(--navy-pale);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">
+                    <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
+                    <path d="M3 9l2-5h14l2 5"/>
+                    <line x1="12" y1="9" x2="12" y2="20"/>
+                    <line x1="3" y1="14" x2="21" y2="14"/>
+                  </svg>
+                </div>
+                Médicaments disponibles
+              </div>
+              <span class="pd-section-count" id="stockCount">{{ stocks|length }}</span>
+            </div>
+
+            <!-- Barre de recherche dans les stocks -->
+            <div class="pd-stock-search">
+              <div class="pd-stock-field">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="stockFilter"
+                       placeholder="Filtrer les médicaments…"
+                       autocomplete="off" />
+              </div>
+            </div>
+
+            {% if stocks %}
+              <div style="overflow-x:auto;">
+                <table class="pd-stock-table" id="stockTable">
+                  <thead>
+                    <tr>
+                      <th style="width:44px;"></th>
+                      <th>Médicament</th>
+                      <th>Catégorie</th>
+                      <th>Stock</th>
+                      <th>Ordonnance</th>
+                      <th>Prix</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for stock in stocks %}
+                    <tr class="pd-stock-row" data-name="{{ stock.medication.name|lower }}">
+                      <!-- Icône / image -->
+                      <td>
+                        <div class="pd-stock-med-img">
+                          {% if stock.medication.image %}
+                            <img src="{{ stock.medication.image.url }}"
+                                 alt="{{ stock.medication.name }}"
+                                 style="width:100%;height:100%;object-fit:contain;border-radius:6px;" />
+                          {% else %}
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ink-5)" stroke-width="1.5">
+                              <rect x="10" y="2" width="4" height="20" rx="2"/>
+                              <rect x="2" y="10" width="20" height="4" rx="2"/>
+                            </svg>
+                          {% endif %}
+                        </div>
+                      </td>
+
+                      <!-- Nom + description courte -->
+                      <td>
+                        <div class="pd-stock-med-name">{{ stock.medication.name }}</div>
+                        {% if stock.medication.manufacturer %}
+                          <div class="pd-stock-med-cat">{{ stock.medication.manufacturer }}</div>
+                        {% endif %}
+                      </td>
+
+                      <!-- Catégorie -->
+                      <td>
+                        {% if stock.medication.category %}
+                          <span class="badge badge-sand">{{ stock.medication.category.name }}</span>
+                        {% else %}
+                          <span style="color:var(--ink-5);font-size:.78rem;">—</span>
+                        {% endif %}
+                      </td>
+
+                      <!-- Quantité -->
+                      <td>
+                        {% if stock.quantity >= 20 %}
+                          <span class="pd-qty-chip pd-qty-high">
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            {{ stock.quantity }}
+                          </span>
+                        {% elif stock.quantity >= 5 %}
+                          <span class="pd-qty-chip pd-qty-medium">
+                            ≈ {{ stock.quantity }}
+                          </span>
+                        {% else %}
+                          <span class="pd-qty-chip pd-qty-low">
+                            ⚠ {{ stock.quantity }}
+                          </span>
+                        {% endif %}
+                      </td>
+
+                      <!-- Ordonnance -->
+                      <td>
+                        {% if stock.medication.requires_prescription %}
+                          <span class="badge badge-red">Requise</span>
+                        {% else %}
+                          <span class="badge badge-green">Non</span>
+                        {% endif %}
+                      </td>
+
+                      <!-- Prix -->
+                      <td>
+                        <span class="pd-price">{{ stock.price|floatformat:0 }}</span>
+                        <span class="pd-price-currency">XAF</span>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Message "aucun résultat filtre" -->
+              <div id="stockNoResult" style="display:none;" class="pd-stock-empty">
+                <div class="pd-stock-empty-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="1.5">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                </div>
+                <div style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--ink);margin-bottom:6px;">
+                  Aucun médicament trouvé
+                </div>
+                <div style="font-size:.78rem;color:var(--ink-4);">
+                  Essayez un autre terme de recherche.
+                </div>
+              </div>
+
+            {% else %}
+              <div class="pd-stock-empty">
+                <div class="pd-stock-empty-icon">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="1.5">
+                    <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
+                    <path d="M3 9l2-5h14l2 5"/>
+                    <line x1="12" y1="9" x2="12" y2="20"/>
+                    <line x1="3" y1="14" x2="21" y2="14"/>
+                  </svg>
+                </div>
+                <div style="font-family:'Fraunces',serif;font-size:1.1rem;color:var(--ink);margin-bottom:8px;">
+                  Aucun stock disponible
+                </div>
+                <p style="font-size:.82rem;color:var(--ink-4);line-height:1.7;max-width:260px;margin:0 auto 16px;">
+                  Cette pharmacie n'a aucun médicament disponible pour le moment.
+                </p>
+                <a href="{% url 'pharmacies:search' %}" class="btn btn-outline btn-sm">
+                  Voir d'autres pharmacies →
+                </a>
+              </div>
+            {% endif %}
+
+          </div>
+        </div>
+
+        <!-- ── TAB AVIS ── -->
+        <div id="tab-reviews" class="pd-tab-pane" style="display:none;">
+          <div class="pd-section">
+
+            <div class="pd-section-head">
+              <div class="pd-section-title">
+                <div class="pd-section-icon" style="background:var(--gold-pale);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </div>
+                Avis clients
+              </div>
+              <a href="{% url 'pharmacies:pharmacy_reviews' pharmacy.id %}"
+                 class="btn btn-outline btn-sm">
+                Voir tous →
+              </a>
+            </div>
+
+            {% if reviews %}
+              <div class="pd-reviews-list">
+                {% for review in reviews %}
+                  <div class="pd-review-item">
+                    <div class="pd-review-top">
+                      <!-- Avatar initiales -->
+                      {% with colors="#0C1F3F,#1A7A5E,#B8841C,#C53030,#6C3483,#117A8B" %}
+                      <div class="pd-review-avatar"
+                           style="background:{% cycle '#0C1F3F' '#1A7A5E' '#B8841C' '#C53030' '#6C3483' %};">
+                        {% if review.user %}
+                          {{ review.user.get_full_name|default:review.user.username|slice:":2"|upper }}
+                        {% else %}
+                          AN
+                        {% endif %}
+                      </div>
+                      {% endwith %}
+                      <div>
+                        <div class="pd-review-author">
+                          {% if review.user %}
+                            {{ review.user.get_full_name|default:review.user.username }}
+                          {% else %}
+                            Utilisateur anonyme
+                          {% endif %}
+                        </div>
+                        <div class="pd-review-date">{{ review.created_at|date:"d F Y" }}</div>
+                      </div>
+                      <div class="pd-review-stars">
+                        {% if review.rating %}
+                          {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                          {% endfor %}
+                        {% else %}
+                          ★★★★★
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% if review.comment %}
+                      <p class="pd-review-text">"{{ review.comment }}"</p>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="pd-reviews-empty">
+                <div style="font-size:2.5rem;margin-bottom:10px;">★</div>
+                <div style="font-family:'Fraunces',serif;font-size:1rem;color:var(--ink);margin-bottom:8px;">
+                  Pas encore d'avis
+                </div>
+                <p style="font-size:.8rem;color:var(--ink-4);line-height:1.7;">
+                  Soyez le premier à laisser un avis sur cette pharmacie.
+                </p>
+              </div>
+            {% endif %}
+
+          </div>
+        </div>
+
+        <!-- ── TAB À PROPOS ── -->
+        {% if pharmacy.description %}
+        <div id="tab-about" class="pd-tab-pane" style="display:none;">
+          <div class="pd-section">
+            <div class="pd-section-head">
+              <div class="pd-section-title">
+                <div class="pd-section-icon" style="background:var(--green-pale);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                </div>
+                À propos de {{ pharmacy.name }}
+              </div>
+            </div>
+            <p class="pd-desc-text">{{ pharmacy.description }}</p>
+          </div>
+        </div>
+        {% endif %}
+
+      </div><!-- /colonne principale -->
+
+
+      <!-- ══ SIDEBAR ══ -->
+      <div class="pd-sidebar">
+
+        <!-- Note globale -->
+        <div class="pd-rating-card">
+          <div class="pd-rating-eyebrow">Note globale</div>
+          <div class="pd-rating-big">
+            {{ pharmacy.average_rating|floatformat:1 }}
+            <span>/ 5</span>
+          </div>
+          <div class="pd-rating-stars-row">
+            {% for i in "12345" %}
+              <span class="pd-rating-star">
+                {% if forloop.counter <= pharmacy.average_rating %}★{% else %}☆{% endif %}
+              </span>
+            {% endfor %}
+          </div>
+          <div class="pd-rating-count">Basé sur {{ pharmacy.total_reviews }} avis</div>
+
+          <!-- Barres de progression (distribution estimée) -->
+          <div class="pd-rating-bar-wrap">
+            {% for val, pct in sibar %}
+            {% endfor %}
+            <!-- Distribution statique illustrative — à remplacer par données réelles -->
+            {% for bar in sibar2 %}{% endfor %}
+            <div class="pd-rating-bar-row">
+              <div class="pd-rating-bar-lbl">5</div>
+              <div class="pd-rating-bar-track"><div class="pd-rating-bar-fill" style="width:75%;"></div></div>
+            </div>
+            <div class="pd-rating-bar-row">
+              <div class="pd-rating-bar-lbl">4</div>
+              <div class="pd-rating-bar-track"><div class="pd-rating-bar-fill" style="width:15%;"></div></div>
+            </div>
+            <div class="pd-rating-bar-row">
+              <div class="pd-rating-bar-lbl">3</div>
+              <div class="pd-rating-bar-track"><div class="pd-rating-bar-fill" style="width:6%;"></div></div>
+            </div>
+            <div class="pd-rating-bar-row">
+              <div class="pd-rating-bar-lbl">2</div>
+              <div class="pd-rating-bar-track"><div class="pd-rating-bar-fill" style="width:3%;"></div></div>
+            </div>
+            <div class="pd-rating-bar-row">
+              <div class="pd-rating-bar-lbl">1</div>
+              <div class="pd-rating-bar-track"><div class="pd-rating-bar-fill" style="width:1%;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Localisation sur carte -->
+        <div class="pd-map-card">
+          <div class="pd-map-container">
+            {% include "components/_map.html" with map_id="detailMap" map_center_json=map_center_json map_zoom=map_zoom map_markers_json=map_markers_json %}
+        </div>
+          <div class="pd-map-footer">
+            <svg class="pd-map-addr-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <div>
+              <div class="pd-map-addr-text">{{ pharmacy.address }}</div>
+              <div class="pd-map-addr-city">{{ pharmacy.city }}, {{ pharmacy.country }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coordonnées -->
+        <div class="pd-info-card">
+          <div class="pd-info-card-head">Coordonnées</div>
+
+          <a href="tel:{{ pharmacy.phone }}" class="pd-info-row">
+            <div class="pd-info-icon" style="background:var(--green-pale);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.58 3.44 2 2 0 0 1 3.54 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.4a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="pd-info-label">Téléphone</div>
+              <div class="pd-info-value">{{ pharmacy.phone }}</div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="2" style="margin-left:auto;flex-shrink:0;">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </a>
+
+          {% if pharmacy.email %}
+          <a href="mailto:{{ pharmacy.email }}" class="pd-info-row">
+            <div class="pd-info-icon" style="background:var(--navy-pale);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </div>
+            <div>
+              <div class="pd-info-label">Email</div>
+              <div class="pd-info-value">{{ pharmacy.email }}</div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="2" style="margin-left:auto;flex-shrink:0;">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </a>
+          {% endif %}
+
+          <a href="https://www.google.com/maps/dir/?api=1&destination={{ pharmacy.latitude }},{{ pharmacy.longitude }}"
+             target="_blank" rel="noopener"
+             class="pd-info-row">
+            <div class="pd-info-icon" style="background:var(--gold-pale);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8">
+                <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+              </svg>
+            </div>
+            <div>
+              <div class="pd-info-label">Itinéraire</div>
+              <div class="pd-info-value">Google Maps</div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="2" style="margin-left:auto;flex-shrink:0;">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Horaires -->
+        <div class="pd-hours-card">
+          <div class="pd-hours-head">
+            <span>Horaires d'ouverture</span>
+            {% if pharmacy.is_open_24h %}
+              <span class="badge badge-green" style="font-size:.65rem;">Ouvert maintenant</span>
+            {% endif %}
+          </div>
+
+          {% if pharmacy.is_open_24h %}
+            <div class="pd-hours-24h">
+              <div class="pd-hours-24h-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <div>
+                <div class="pd-hours-24h-label">Ouvert 24h/24, 7j/7</div>
+                <div class="pd-hours-24h-sub">Cette pharmacie ne ferme jamais</div>
+              </div>
+            </div>
+          {% else %}
+            <div class="pd-hours-row">
+              <span class="pd-hours-day">Lundi – Vendredi</span>
+              <span class="pd-hours-time">{{ pharmacy.opening_time|time:"H:i" }} – {{ pharmacy.closing_time|time:"H:i" }}</span>
+            </div>
+            <div class="pd-hours-row">
+              <span class="pd-hours-day">Samedi</span>
+              <span class="pd-hours-time">{{ pharmacy.opening_time|time:"H:i" }} – {{ pharmacy.closing_time|time:"H:i" }}</span>
+            </div>
+            <div class="pd-hours-row">
+              <span class="pd-hours-day">Dimanche</span>
+              <span class="pd-hours-time" style="color:var(--ink-4);">Fermé</span>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Lien tous les avis -->
+        <a href="{% url 'pharmacies:pharmacy_reviews' pharmacy.id %}"
+           class="btn btn-outline"
+           style="width:100%;justify-content:center;background:white;">
+          Voir tous les avis ({{ pharmacy.total_reviews }}) →
+        </a>
+
+      </div><!-- /sidebar -->
+
+    </div><!-- /pd-layout -->
+  </div><!-- /container -->
+</div><!-- /pd-body -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  /* ══════════════════════════════════════
+     1. ONGLETS
+  ══════════════════════════════════════ */
+  var tabs  = document.querySelectorAll('.pd-tab');
+  var panes = document.querySelectorAll('.pd-tab-pane');
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function (e) {
+      e.preventDefault();
+      var target = tab.dataset.target;
+      tabs.forEach(function (t) { t.classList.remove('active'); });
+      panes.forEach(function (p) { p.style.display = 'none'; });
+      tab.classList.add('active');
+      var pane = document.getElementById(target);
+      if (pane) pane.style.display = 'block';
+    });
+  });
+
+  /* ══════════════════════════════════════
+     2. FILTRE STOCKS
+  ══════════════════════════════════════ */
+  var stockFilter = document.getElementById('stockFilter');
+  if (stockFilter) {
+    stockFilter.addEventListener('input', function () {
+      var q    = this.value.trim().toLowerCase();
+      var rows = document.querySelectorAll('.pd-stock-row');
+      var vis  = 0;
+
+      rows.forEach(function (row) {
+        var name = row.dataset.name || '';
+        var show = !q || name.indexOf(q) !== -1;
+        row.classList.toggle('pd-hidden', !show);
+        if (show) vis++;
+      });
+
+      var countEl = document.getElementById('stockCount');
+      if (countEl) countEl.textContent = vis;
+
+      var noRes = document.getElementById('stockNoResult');
+      if (noRes) noRes.style.display = (vis === 0 && rows.length > 0) ? 'block' : 'none';
+    });
+  }
+
+})();
+</script>
+{% endblock %}

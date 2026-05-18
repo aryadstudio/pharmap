@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Créer un compte — PharMap{% endblock %}
+{% block meta_description %}Créez votre compte PharMap pour trouver vos médicaments et réserver en ligne.{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Cache la navbar globale — cette page a son propre branding ── */
+#mainNavbar,
+.bottom-nav { display: none !important; }
+
+/* ════════════════════════════════════════
+   REGISTER PATIENT — préfixe .rp-
+   Zéro conflit avec les autres pages
+════════════════════════════════════════ */
+
+.rp-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--sand);
+}
+
+/* ── Panneau gauche (visuel) ── */
+.rp-visual {
+  position: relative;
+  background: var(--navy);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 56px;
+  min-height: 100vh;
+}
+.rp-visual-bg {
+  position: absolute; inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=1200&q=80&auto=format&fit=crop');
+  background-size: cover; background-position: center;
+  opacity: 0.18;
+}
+.rp-visual-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 80%, rgba(26,122,94,0.28) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 40% at 80% 10%, rgba(184,132,28,0.14) 0%, transparent 65%);
+}
+.rp-visual-content { position: relative; z-index: 1; }
+
+.rp-visual-logo {
+  position: absolute; top: 40px; left: 56px; z-index: 2;
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none;
+}
+.rp-visual-logo-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+}
+.rp-visual-logo-name {
+  font-family: 'Fraunces', serif;
+  font-size: 1.3rem; color: white; font-weight: 300;
+  letter-spacing: -0.5px;
+}
+
+.rp-visual-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(26,122,94,0.2);
+  border: 1px solid rgba(34,160,124,0.35);
+  color: #6EDCBC;
+  padding: 5px 14px 5px 8px;
+  border-radius: 999px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px;
+  margin-bottom: 20px;
+}
+.rp-visual-pill-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #22A07C;
+  animation: rpDot 2.2s ease-in-out infinite;
+}
+@keyframes rpDot {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.5; transform:scale(.75); }
+}
+
+.rp-visual-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2rem, 3.2vw, 2.8rem);
+  color: white; font-weight: 300;
+  line-height: 1.12; letter-spacing: -1px;
+  margin-bottom: 16px;
+}
+.rp-visual-title em { font-style: italic; color: #6EDCBC; }
+
+.rp-visual-desc {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.48);
+  line-height: 1.8; max-width: 360px;
+  margin-bottom: 36px;
+}
+
+.rp-visual-features { display: flex; flex-direction: column; gap: 14px; }
+.rp-visual-feat     { display: flex; align-items: center; gap: 12px; }
+.rp-visual-feat-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: rgba(255,255,255,0.07);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.rp-visual-feat-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem; font-weight: 600;
+  color: rgba(255,255,255,0.6);
+}
+
+/* ── Panneau droit (formulaire) ── */
+.rp-form-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 48px;
+  background: white;
+  overflow-y: auto;
+}
+.rp-form-inner { width: 100%; max-width: 440px; }
+
+.rp-form-header  { margin-bottom: 36px; }
+.rp-form-eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 1.6px; text-transform: uppercase;
+  color: var(--green); margin-bottom: 10px;
+}
+.rp-form-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.8rem; font-weight: 300;
+  color: var(--ink); letter-spacing: -0.8px; line-height: 1.18;
+}
+.rp-form-title em { font-style: italic; color: var(--navy); }
+.rp-form-sub {
+  font-size: 0.85rem; color: var(--ink-4);
+  line-height: 1.7; margin-top: 8px;
+}
+
+/* Champs */
+.rp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.rp-field {
+  display: flex; flex-direction: column;
+  gap: 6px; margin-bottom: 16px;
+}
+.rp-field:last-child { margin-bottom: 0; }
+.rp-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--ink-3);
+}
+.rp-input {
+  width: 100%; padding: 12px 14px;
+  background: var(--sand);
+  border: 1.5px solid var(--line-2);
+  border-radius: var(--r-sm);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem; color: var(--ink);
+  outline: none; transition: var(--t); box-sizing: border-box;
+}
+.rp-input:focus {
+  border-color: var(--navy); background: white;
+  box-shadow: 0 0 0 3px rgba(12,31,63,0.08);
+}
+.rp-input.is-error { border-color: #C53030; background: #FFF5F5; }
+.rp-input::placeholder { color: var(--ink-5); }
+.rp-error {
+  font-size: 0.72rem; color: #C53030;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* Password toggle */
+.rp-pw-wrap { position: relative; }
+.rp-pw-toggle {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-4); padding: 4px;
+  display: flex; align-items: center; transition: var(--t);
+}
+.rp-pw-toggle:hover { color: var(--navy); }
+
+/* Submit */
+.rp-submit {
+  width: 100%; padding: 14px;
+  background: var(--navy); color: white;
+  border: none; border-radius: var(--r-sm);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; transition: var(--t);
+  box-shadow: 0 4px 14px rgba(12,31,63,0.3);
+  margin-top: 8px;
+}
+.rp-submit:hover {
+  background: var(--green);
+  box-shadow: 0 8px 24px rgba(26,122,94,0.38);
+  transform: translateY(-1px);
+}
+
+/* Lien connexion */
+.rp-login-link {
+  margin-top: 24px; text-align: center;
+  font-size: 0.82rem; color: var(--ink-4);
+}
+.rp-login-link a {
+  color: var(--navy); font-weight: 600; text-decoration: none;
+}
+.rp-login-link a:hover { text-decoration: underline; }
+
+/* Switch pharmacien */
+.rp-switch-box {
+  background: var(--navy-pale);
+  border: 1px solid var(--navy-tint);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 14px;
+  margin-bottom: 24px; text-decoration: none;
+  transition: var(--t);
+}
+.rp-switch-box:hover { background: var(--navy-tint); }
+.rp-switch-box-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem; font-weight: 600; color: var(--navy);
+}
+.rp-switch-box-sub {
+  font-size: 0.7rem; color: var(--ink-4); margin-top: 2px;
+  font-family: 'Inter', sans-serif;
+}
+.rp-switch-btn {
+  padding: 7px 14px;
+  background: var(--navy); color: white;
+  border-radius: var(--r-xs);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 700;
+  white-space: nowrap; flex-shrink: 0;
+}
+
+/* Messages */
+.rp-messages { margin-bottom: 20px; }
+.rp-msg {
+  padding: 10px 14px; border-radius: var(--r-sm);
+  font-size: 0.82rem; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.rp-msg-error   { background: #FFF5F5; color: #C53030; border: 1px solid #FDDCDC; }
+.rp-msg-success { background: #F0FBF7; color: #1A7A5E; border: 1px solid #C8EFE3; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .rp-page       { grid-template-columns: 1fr; }
+  .rp-visual     { display: none; }
+  .rp-form-panel { padding: 40px 24px; min-height: 100vh; }
+}
+@media (max-width: 480px) {
+  .rp-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block main_class %}page-content-flush{% endblock %}
+
+{% block content %}
+<div class="rp-page">
+
+  <!-- ══ PANNEAU GAUCHE ══ -->
+  <div class="rp-visual">
+    <div class="rp-visual-bg"></div>
+    <div class="rp-visual-glow"></div>
+
+    <a href="{% url 'home' %}" class="rp-visual-logo">
+      <div class="rp-visual-logo-icon">
+        <img src="{% static 'icons/symbole-logo.png' %}" width="20" height="20" alt="PharMap logo" />
+      </div>
+      <span class="rp-visual-logo-name">PharMap</span>
+    </a>
+
+    <div class="rp-visual-content">
+      <div class="rp-visual-pill">
+        <div class="rp-visual-pill-dot"></div>
+        Gratuit &amp; Sans engagement
+      </div>
+
+      <h2 class="rp-visual-title">
+        Vos médicaments<br />
+        en <em>quelques secondes</em>
+      </h2>
+
+      <p class="rp-visual-desc">
+        Rejoignez des milliers de patients au Gabon qui trouvent
+        leurs médicaments, comparent les prix et réservent sans se déplacer.
+      </p>
+
+      <div class="rp-visual-features">
+        <div class="rp-visual-feat">
+          <div class="rp-visual-feat-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6EDCBC" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <div class="rp-visual-feat-text">Recherche en temps réel</div>
+        </div>
+        <div class="rp-visual-feat">
+          <div class="rp-visual-feat-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6EDCBC" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <div class="rp-visual-feat-text">Pharmacies géolocalisées</div>
+        </div>
+        <div class="rp-visual-feat">
+          <div class="rp-visual-feat-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6EDCBC" stroke-width="2">
+              <rect x="2" y="5" width="20" height="14" rx="3"/>
+              <line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+          </div>
+          <div class="rp-visual-feat-text">Paiement Airtel Money &amp; Mobicash</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANNEAU DROIT ══ -->
+  <div class="rp-form-panel">
+    <div class="rp-form-inner">
+
+      <!-- Switch vers pharmacien -->
+      <a href="{% url 'auth_user:register_pharmacist' %}" class="rp-switch-box">
+        <div>
+          <div class="rp-switch-box-text">Vous êtes pharmacien ?</div>
+          <div class="rp-switch-box-sub">Inscrivez votre pharmacie sur PharMap</div>
+        </div>
+        <span class="rp-switch-btn">Espace pro →</span>
+      </a>
+
+      <div class="rp-form-header">
+        <div class="rp-form-eyebrow">Nouveau compte</div>
+        <h1 class="rp-form-title">Créez votre<br /><em>espace patient</em></h1>
+        <p class="rp-form-sub">Inscription gratuite, sans carte bancaire requise.</p>
+      </div>
+
+      {% if messages %}
+        <div class="rp-messages">
+          {% for msg in messages %}
+            <div class="rp-msg {% if msg.tags == 'error' %}rp-msg-error{% else %}rp-msg-success{% endif %}">
+              {{ msg }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="POST" novalidate>
+        {% csrf_token %}
+
+        <div class="rp-row">
+          <div class="rp-field">
+            <label class="rp-label" for="id_first_name">Prénom</label>
+            <input class="rp-input {% if form.first_name.errors %}is-error{% endif %}"
+                   type="text" id="id_first_name" name="first_name"
+                   value="{{ form.first_name.value|default:'' }}"
+                   placeholder="Marie" autocomplete="given-name" />
+            {% for err in form.first_name.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
+          </div>
+          <div class="rp-field">
+            <label class="rp-label" for="id_last_name">Nom</label>
+            <input class="rp-input {% if form.last_name.errors %}is-error{% endif %}"
+                   type="text" id="id_last_name" name="last_name"
+                   value="{{ form.last_name.value|default:'' }}"
+                   placeholder="Obame" autocomplete="family-name" />
+            {% for err in form.last_name.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
+          </div>
+        </div>
+
+        <div class="rp-field">
+          <label class="rp-label" for="id_email">Adresse email</label>
+          <input class="rp-input {% if form.email.errors %}is-error{% endif %}"
+                 type="email" id="id_email" name="email"
+                 value="{{ form.email.value|default:'' }}"
+                 placeholder="marie@exemple.com" autocomplete="email" />
+          {% for err in form.email.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
+        </div>
+
+        <div class="rp-field">
+          <label class="rp-label" for="id_phone">Téléphone</label>
+          <input class="rp-input {% if form.phone.errors %}is-error{% endif %}"
+                 type="tel" id="id_phone" name="phone"
+                 value="{{ form.phone.value|default:'' }}"
+                 placeholder="+241 06 00 00 00" autocomplete="tel" />
+          {% for err in form.phone.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
+        </div>
+
+        <div class="rp-field">
+          <label class="rp-label" for="id_password1">Mot de passe</label>
+          <div class="rp-pw-wrap">
+            <input class="rp-input {% if form.password1.errors %}is-error{% endif %}"
+                   type="password" id="id_password1" name="password1"
+                   placeholder="8 caractères minimum"
+                   autocomplete="new-password" />
+            <button type="button" class="rp-pw-toggle" onclick="togglePw('id_password1', this)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          {% for err in form.password1.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
+        </div>
+
+        <div class="rp-field">
+          <label class="rp-label" for="id_password2">Confirmer le mot de passe</label>
+          <div class="rp-pw-wrap">
+            <input class="rp-input {% if form.password2.errors %}is-error{% endif %}"
+                   type="password" id="id_password2" name="password2"
+                   placeholder="Répétez votre mot de passe"
+                   autocomplete="new-password" />
+            <button type="button" class="rp-pw-toggle" onclick="togglePw('id_password2', this)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          {% for err in form.password2.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
+        </div>
+
+        <button type="submit" class="rp-submit">
+          Créer mon compte →
+        </button>
+      </form>
+
+      <div class="rp-login-link">
+        Déjà un compte ?
+        <a href="{% url 'auth_user:login' %}">Se connecter</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePw(id, btn) {
+  var input = document.getElementById(id);
+  var isText = input.type === 'text';
+  input.type = isText ? 'password' : 'text';
+  btn.style.color = isText ? 'var(--ink-4)' : 'var(--navy)';
+}
+</script>
+{% endblock %}

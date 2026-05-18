@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Nouvelle commande — {{ pharmacy.name }} — PharMap{% endblock %}
+
+{% block extra_css %}
+<style>
+.oc-hero { background: var(--navy); padding: 60px 0 44px; }
+.oc-title {
+  font-family: 'Fraunces', serif; font-size: clamp(1.6rem,3vw,2.2rem);
+  color: white; font-weight: 300;
+}
+.oc-title em { font-style: italic; color: #6EDCBC; }
+
+.oc-card {
+  background: white; border-radius: var(--r-xl);
+  border: 1px solid var(--line); padding: 36px;
+}
+.oc-section-title {
+  font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--ink-4); text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.oc-item-row {
+  display: grid; grid-template-columns: 1fr 100px auto; gap: 12px;
+  align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line);
+}
+.oc-item-row:last-of-type { border-bottom: none; }
+.oc-price-hint { font-size: 0.75rem; color: var(--ink-4); margin-top: 4px; }
+.oc-summary {
+  background: var(--navy-pale); border-radius: var(--r-lg);
+  padding: 20px 24px; margin-top: 24px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.oc-total-label { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--navy); }
+.oc-total-val { font-family: 'Fraunces', serif; font-size: 1.5rem; color: var(--navy); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="oc-hero">
+  <div class="container">
+    <div class="afu">
+      <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-bottom:14px;">
+        <a href="{% url 'pharmacies:pharmacy_detail' pharmacy.id %}"
+           style="color:inherit;text-decoration:none;">← {{ pharmacy.name }}</a>
+      </div>
+      <div class="oc-title">Nouvelle <em>commande</em></div>
+      <p style="color:rgba(255,255,255,0.5);font-size:0.875rem;margin-top:8px;">
+        {{ pharmacy.name }} · {{ pharmacy.city }}
+      </p>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--sand);padding:48px 0;">
+  <div class="container" style="max-width:760px;">
+
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" style="margin-bottom:16px;">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="POST" class="afu">
+      {% csrf_token %}
+      {{ formset.management_form }}
+
+      <div class="oc-card" style="margin-bottom:20px;">
+        <div class="oc-section-title">Médicaments</div>
+
+        <div id="formset-container">
+          {% for form in formset %}
+          <div class="oc-item-row formset-row">
+            <div>
+              {{ form.medication }}
+              {% if form.medication.errors %}
+              <div style="color:#e74c3c;font-size:0.75rem;">{{ form.medication.errors }}</div>
+              {% endif %}
+            </div>
+            <div>
+              {{ form.quantity }}
+              {% if form.quantity.errors %}
+              <div style="color:#e74c3c;font-size:0.75rem;">{{ form.quantity.errors }}</div>
+              {% endif %}
+            </div>
+            <div>
+              {% if formset.can_delete %}
+              <label style="display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--ink-4);cursor:pointer;">
+                {{ form.DELETE }} Retirer
+              </label>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Stock dispo -->
+        <div style="margin-top:16px;">
+          <div class="oc-section-title">Stock disponible</div>
+          {% for stock in stocks %}
+          <div style="display:flex;justify-content:space-between;padding:6px 0;
+                      font-size:0.82rem;border-bottom:1px solid var(--line);">
+            <span style="color:var(--ink);">{{ stock.medication.name }}</span>
+            <span style="color:var(--ink-4);">{{ stock.quantity }} unité{{ stock.quantity|pluralize }} · {{ stock.price }} FCFA</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="oc-card" style="margin-bottom:20px;">
+        <div class="oc-section-title">Note pour la pharmacie <span style="font-weight:400;">(optionnel)</span></div>
+        <textarea name="note" class="form-control" rows="3"
+                  placeholder="Ex : livraison urgente, préférence de conditionnement…"
+                  style="resize:vertical;"></textarea>
+      </div>
+
+      <div class="oc-summary">
+        <span class="oc-total-label">Total estimé</span>
+        <span class="oc-total-val" id="totalDisplay">— FCFA</span>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <a href="{% url 'pharmacies:pharmacy_detail' pharmacy.id %}" class="btn btn-outline">
+          Annuler
+        </a>
+        <button type="submit" class="btn btn-primary">
+          Confirmer la commande →
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Données de stock pour calcul côté client
+const stockData = {
+  {% for stock in stocks %}
+  "{{ stock.medication_id }}": {{ stock.price }},
+  {% endfor %}
+};
+
+function updateTotal() {
+  let total = 0;
+  document.querySelectorAll('.formset-row').forEach(row => {
+    const medSelect = row.querySelector('select[name$="-medication"]');
+    const qtyInput  = row.querySelector('input[name$="-quantity"]');
+    const deleted   = row.querySelector('input[name$="-DELETE"]');
+    if (deleted && deleted.checked) return;
+    if (!medSelect || !qtyInput) return;
+    const price = stockData[medSelect.value] || 0;
+    const qty   = parseInt(qtyInput.value) || 0;
+    total += price * qty;
+  });
+  document.getElementById('totalDisplay').textContent =
+    total > 0 ? total.toLocaleString('fr-FR') + ' FCFA' : '— FCFA';
+}
+
+document.querySelectorAll('select, input[type=number]').forEach(el => {
+  el.addEventListener('change', updateTotal);
+  el.addEventListener('input', updateTotal);
+});
+</script>
+{% endblock %}

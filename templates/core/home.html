@@ -1,0 +1,1294 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}PharMap — Trouvez vos médicaments{% endblock %}
+{% block main_class %}page-content-flush{% endblock %}
+
+{% block extra_css %}
+<style>
+
+/* ════════════════════════════════════════
+   HERO
+════════════════════════════════════════ */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute; inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1800&q=80&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center 30%;
+  transform: scale(1.04);
+  animation: heroZoom 12s ease-out forwards;
+}
+@keyframes heroZoom {
+  from { transform: scale(1.04); }
+  to   { transform: scale(1); }
+}
+
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    105deg,
+    rgba(8,16,32,0.88) 0%,
+    rgba(10,22,46,0.72) 50%,
+    rgba(8,16,32,0.40) 100%
+  );
+}
+
+.hero-grain {
+  position: absolute; inset: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px;
+  pointer-events: none;
+}
+
+.hero-accent-line {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, transparent, var(--gold-2), transparent);
+  opacity: 0.5;
+}
+
+.hero-inner {
+  position: relative; z-index: 2; width: 100%;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 72px;
+  align-items: center;
+  padding: 140px 0 100px;
+}
+
+/* ── Pill ── */
+.hero-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(26,122,94,0.18);
+  border: 1px solid rgba(34,160,124,0.35);
+  color: #6EDCBC;
+  padding: 5px 14px 5px 7px;
+  border-radius: 999px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.3px;
+  margin-bottom: 28px;
+  backdrop-filter: blur(6px);
+}
+.hero-pill-pulse {
+  width: 22px; height: 22px;
+  background: rgba(34,160,124,0.22);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.hero-pill-pulse::after {
+  content: '';
+  width: 9px; height: 9px;
+  background: #22A07C;
+  border-radius: 50%;
+  animation: pdot 2.2s ease-in-out infinite;
+}
+@keyframes pdot {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.55; transform:scale(.78); }
+}
+
+/* ── Titre ── */
+.hero-h1 {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(3rem, 5.8vw, 5rem);
+  color: white;
+  line-height: 1.06;
+  letter-spacing: -2.5px;
+  margin-bottom: 24px;
+  font-weight: 300;
+  text-shadow: 0 2px 32px rgba(0,0,0,0.2);
+}
+.hero-h1-em { font-style: italic; color: #6EDCBC; font-weight: 300; }
+
+.hero-sub {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.58);
+  line-height: 1.8;
+  max-width: 460px;
+  margin-bottom: 44px;
+}
+
+/* ── Search box ── */
+.hero-search-box {
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(24px);
+  border-radius: var(--r-lg);
+  padding: 22px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.12);
+  margin-bottom: 36px;
+}
+.hero-search-eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.4px;
+  color: var(--ink-4); margin-bottom: 10px;
+}
+.hero-search-row { display: flex; gap: 8px; }
+
+.hero-search-field {
+  flex: 1;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--sand);
+  border: 1.5px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  transition: var(--t);
+}
+.hero-search-field:focus-within {
+  border-color: var(--navy);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(12,31,63,0.08);
+}
+.hero-search-field input {
+  border: none; outline: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem; color: var(--ink);
+  background: transparent; width: 100%;
+}
+.hero-search-field input::placeholder { color: var(--ink-5); }
+
+.hero-search-btn {
+  padding: 12px 24px;
+  background: var(--navy); color: white;
+  border: none; border-radius: var(--r-sm);
+  font-family: 'Syne', sans-serif; font-size: 0.84rem; font-weight: 700;
+  cursor: pointer; transition: var(--t);
+  box-shadow: 0 4px 14px rgba(12,31,63,0.35);
+  white-space: nowrap;
+}
+.hero-search-btn:hover {
+  background: var(--green);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(26,122,94,0.42);
+}
+
+.hero-tags {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 12px; align-items: center;
+}
+.hero-tag-label { font-size: 0.72rem; color: var(--ink-5); }
+.hero-tag-btn {
+  padding: 4px 12px;
+  background: var(--sand-2); color: var(--ink-3);
+  border-radius: 999px; font-size: 0.75rem; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--sand-3);
+  font-family: 'Inter', sans-serif; transition: var(--t);
+}
+.hero-tag-btn:hover {
+  background: var(--navy-pale); color: var(--navy);
+  border-color: var(--navy-tint);
+}
+
+/* ── Stats ── */
+.hero-stats {
+  display: flex; gap: 0;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+}
+.hero-stat {
+  flex: 1; padding: 20px 22px; text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.09);
+}
+.hero-stat:last-child { border-right: none; }
+.hero-stat-val {
+  font-family: 'Fraunces', serif; font-size: 2rem;
+  color: white; line-height: 1; letter-spacing: -0.5px;
+}
+.hero-stat-val span { color: #6EDCBC; }
+.hero-stat-lbl {
+  font-family: 'Syne', sans-serif; font-size: 0.71rem;
+  color: rgba(255,255,255,0.42); margin-top: 5px;
+  font-weight: 500; letter-spacing: 0.2px;
+}
+
+/* ── Visual card (droite) ── */
+.hero-visual-card {
+  background: rgba(255,255,255,0.96);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.2);
+  animation: fadeUp 0.7s 0.2s var(--ease) both;
+  border: 1px solid rgba(255,255,255,0.4);
+}
+.hvc-topbar {
+  background: var(--navy);
+  padding: 13px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.hvc-topbar-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem; font-weight: 700; color: white;
+  display: flex; align-items: center; gap: 7px;
+}
+.live-indicator {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.68rem; color: #6EDCBC; font-weight: 600;
+}
+.live-dot {
+  width: 6px; height: 6px;
+  background: #22A07C; border-radius: 50%;
+  animation: blink 1.9s infinite;
+}
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: .35; }
+}
+.hvc-map-illustration {
+  height: 220px;
+  background: #EDF2FA;
+  position: relative; overflow: hidden;
+}
+.hvc-list {
+  padding: 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.hvc-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 13px;
+  background: var(--sand);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  cursor: pointer; transition: var(--t);
+  text-decoration: none;
+}
+.hvc-item:hover { background: var(--navy-pale); border-color: var(--navy-tint); }
+.hvc-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.hvc-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.81rem; font-weight: 700; color: var(--ink);
+}
+.hvc-meta {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem; color: var(--ink-4); margin-top: 2px;
+}
+
+/* ════════════════════════════════════════
+   COMMENT ÇA MARCHE
+════════════════════════════════════════ */
+.steps-wrap {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 0;
+  background: var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  margin-top: 52px;
+}
+.step {
+  background: white;
+  padding: 44px 36px;
+  position: relative;
+  transition: var(--t);
+}
+.step:hover { background: var(--sand); }
+
+.step-number {
+  font-family: 'Fraunces', serif;
+  font-size: 3rem; font-weight: 300; font-style: italic;
+  line-height: 1; margin-bottom: 20px;
+}
+.step-n-1 { color: var(--navy-pale); }
+.step-n-2 { color: var(--green-pale); }
+.step-n-3 { color: var(--gold-pale); }
+
+.step-illus   { margin-bottom: 22px; }
+.step-title   { font-family: 'Fraunces', serif; font-size: 1.2rem; color: var(--ink); margin-bottom: 10px; font-weight: 400; }
+.step-desc    { font-size: 0.875rem; color: var(--ink-3); line-height: 1.75; }
+
+.step-connector {
+  position: absolute; top: 52px; right: -16px; z-index: 2;
+  width: 32px; height: 32px;
+  background: white; border: 1.5px solid var(--line-2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-4);
+}
+.step:last-child .step-connector { display: none; }
+
+/* ════════════════════════════════════════
+   MÉDICAMENTS POPULAIRES
+════════════════════════════════════════ */
+.meds-track {
+  display: flex; gap: 16px;
+  overflow-x: auto; padding-bottom: 8px;
+  scrollbar-width: none;
+  margin-top: 40px;
+}
+.meds-track::-webkit-scrollbar { display: none; }
+
+.med-card {
+  flex: 0 0 auto; width: 210px;
+  background: white; border-radius: 18px;
+  border: 1px solid #ECEEF2; overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.22s ease, transform 0.22s ease;
+  text-decoration: none; display: block;
+  box-shadow: 0 2px 12px rgba(12,31,63,0.06);
+}
+.med-card:hover {
+  box-shadow: 0 16px 48px rgba(12,31,63,0.13);
+  transform: translateY(-5px);
+}
+.med-visual {
+  height: 148px; background: #F4F6F9;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; padding: 16px; overflow: hidden;
+}
+.med-visual img {
+  max-width: 100%; max-height: 116px;
+  object-fit: contain; display: block;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.10));
+  transition: transform 0.3s ease;
+}
+.med-card:hover .med-visual img { transform: scale(1.04); }
+
+.med-visual-placeholder { width: 80px; height: 80px; opacity: 0.18; }
+
+.med-body { padding: 14px 16px 16px; }
+
+.med-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.92rem; font-weight: 700; color: #0C1F3F;
+  margin-bottom: 3px; line-height: 1.25;
+}
+.med-name-dosage { font-weight: 400; color: #6B7A99; }
+
+.med-category {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem; color: #8E99B0;
+  margin-bottom: 14px; letter-spacing: 0.1px;
+}
+.med-footer {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 8px;
+}
+.med-price {
+  font-family: 'Fraunces', serif;
+  font-size: 1.15rem; font-weight: 700;
+  color: #0C1F3F; letter-spacing: -0.3px; line-height: 1;
+}
+.med-price-currency {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem; font-weight: 500;
+  color: #6B7A99; margin-left: 2px; letter-spacing: 0.2px;
+}
+.med-badge {
+  display: inline-flex; align-items: center;
+  padding: 4px 10px; border-radius: 999px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.67rem; font-weight: 600;
+  white-space: nowrap; flex-shrink: 0;
+}
+.med-badge-rx  { background: #FFF0F0; color: #C0392B; border: 1px solid #FDDCDC; }
+.med-badge-otc { background: #F0FBF7; color: #1A7A5E; border: 1px solid #C8EFE3; }
+
+/* ════════════════════════════════════════
+   PHARMACIES PARTENAIRES
+════════════════════════════════════════ */
+.pha-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+  gap: 24px; margin-top: 40px;
+}
+.pha-card {
+  background: white; border-radius: var(--r-lg);
+  overflow: hidden; border: 1px solid var(--line);
+  transition: var(--t); text-decoration: none; display: block;
+}
+.pha-card:hover { box-shadow: var(--sh-3); transform: translateY(-4px); }
+
+.pha-head {
+  height: 160px; position: relative;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.pha-head-img {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  transition: transform 0.4s var(--ease);
+}
+.pha-card:hover .pha-head-img { transform: scale(1.04); }
+.pha-head-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(12,31,63,0.1), rgba(12,31,63,0.55));
+}
+.pha-verified {
+  position: absolute; top: 12px; right: 12px;
+  background: white; border-radius: 7px; padding: 3px 9px;
+  font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700;
+  color: var(--green);
+  display: flex; align-items: center; gap: 3px;
+  box-shadow: var(--sh-1); z-index: 2;
+}
+.pha-body    { padding: 22px; }
+.pha-name    { font-family: 'Fraunces', serif; font-size: 1.1rem; color: var(--ink); margin-bottom: 7px; font-weight: 400; }
+.pha-addr    { font-size: 0.78rem; color: var(--ink-4); margin-bottom: 16px; display: flex; align-items: center; gap: 5px; }
+.pha-meta    { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.pha-rating  { display: flex; align-items: center; gap: 5px; font-size: 0.82rem; font-weight: 600; color: var(--ink-2); }
+.pha-footer  { display: flex; gap: 8px; }
+
+/* ════════════════════════════════════════
+   FEATURE BAND
+════════════════════════════════════════ */
+.feature-band {
+  position: relative; overflow: hidden;
+  border-radius: var(--r-xl);
+  margin: 0 32px;
+  min-height: 440px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+}
+.feature-band-photo {
+  background-image: url('{% static "icons/el-.png" %}');
+  background-size: cover; background-position: center;
+}
+.feature-band-content {
+  background: var(--navy);
+  padding: 64px 56px;
+  display: flex; flex-direction: column; justify-content: center;
+  position: relative; z-index: 1;
+}
+.feature-band-eyebrow {
+  font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 1.6px; text-transform: uppercase;
+  color: #6EDCBC; margin-bottom: 20px;
+}
+.feature-band-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(1.8rem, 2.5vw, 2.6rem);
+  color: white; line-height: 1.18; margin-bottom: 20px;
+  letter-spacing: -0.5px; font-weight: 300;
+}
+.feature-band-title em { font-style: italic; color: #6EDCBC; }
+.feature-band-desc {
+  font-size: 0.95rem; color: rgba(255,255,255,0.52);
+  line-height: 1.8; margin-bottom: 36px;
+}
+.feature-list   { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
+.feature-item   { display: flex; align-items: flex-start; gap: 14px; }
+.feature-item-icon {
+  width: 36px; height: 36px; flex-shrink: 0;
+  background: rgba(34,160,124,0.18); border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.feature-item-text  { font-size: 0.875rem; color: rgba(255,255,255,0.65); line-height: 1.6; }
+.feature-item-title { font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700; color: white; margin-bottom: 3px; }
+
+/* ════════════════════════════════════════
+   TÉMOIGNAGES
+════════════════════════════════════════ */
+.testi-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 22px; margin-top: 44px;
+}
+.testi-card {
+  background: white; border-radius: var(--r-lg);
+  padding: 32px; border: 1px solid var(--line);
+  transition: var(--t); position: relative;
+}
+.testi-card:hover { box-shadow: var(--sh-2); transform: translateY(-2px); }
+.testi-quote {
+  font-family: 'Fraunces', serif; font-size: 5rem;
+  font-style: italic; color: var(--sand-2);
+  line-height: 0.7; margin-bottom: 18px; display: block;
+}
+.testi-text   { font-size: 0.9rem; color: var(--ink-3); line-height: 1.78; margin-bottom: 24px; }
+.testi-author { display: flex; align-items: center; gap: 13px; }
+.testi-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem;
+  color: white; flex-shrink: 0;
+}
+.testi-name { font-family: 'Syne', sans-serif; font-size: 0.875rem; font-weight: 700; color: var(--ink); }
+.testi-role { font-size: 0.72rem; color: var(--ink-4); margin-top: 2px; }
+
+/* ════════════════════════════════════════
+   CTA BAND
+════════════════════════════════════════ */
+.cta-band {
+  background: var(--navy);
+  border-radius: var(--r-xl);
+  padding: 80px 72px;
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 60px; align-items: center;
+  position: relative; overflow: hidden;
+}
+.cta-band::before {
+  content: '';
+  position: absolute; top: -80px; right: -80px;
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, rgba(26,122,94,0.14) 0%, transparent 70%);
+}
+.cta-band::after {
+  content: '';
+  position: absolute; bottom: -60px; left: 35%;
+  width: 260px; height: 260px;
+  background: radial-gradient(circle, rgba(184,132,28,0.1) 0%, transparent 70%);
+}
+.cta-band-content  { position: relative; z-index: 1; }
+.cta-band-eyebrow  { font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: #6EDCBC; margin-bottom: 16px; }
+.cta-band-title    { font-family: 'Fraunces', serif; font-size: clamp(1.7rem, 2.6vw, 2.4rem); color: white; line-height: 1.2; margin-bottom: 14px; letter-spacing: -0.5px; font-weight: 300; }
+.cta-band-desc     { font-size: 0.95rem; color: rgba(255,255,255,0.52); line-height: 1.7; }
+.cta-band-actions  { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 10px; }
+
+.cta-store-btn {
+  display: flex; align-items: center; gap: 14px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.13);
+  color: white; padding: 14px 22px;
+  border-radius: var(--r-sm); text-decoration: none;
+  transition: var(--t);
+}
+.cta-store-btn:hover { background: rgba(255,255,255,0.14); transform: translateX(4px); }
+.cta-store-label-sm { font-size: 0.66rem; color: rgba(255,255,255,0.45); }
+.cta-store-label    { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; }
+
+/* ════════════════════════════════════════
+   RESPONSIVE (spécifique home)
+════════════════════════════════════════ */
+@media (max-width: 1020px) {
+  .hero-inner          { grid-template-columns: 1fr; padding: 120px 0 72px; }
+  .hero-visual-card    { display: none; }
+  .steps-wrap          { grid-template-columns: 1fr; }
+  .step-connector      { display: none; }
+  .testi-grid          { grid-template-columns: 1fr; }
+  .cta-band            { grid-template-columns: 1fr; text-align: center; padding: 56px 36px; }
+  .cta-band-actions    { flex-direction: row; justify-content: center; }
+  .feature-band        { grid-template-columns: 1fr; margin: 0 18px; }
+  .feature-band-photo  { height: 260px; }
+  .feature-band-content{ padding: 44px 32px; }
+}
+@media (max-width: 640px) {
+  .hero-stats          { flex-direction: column; }
+  .hero-stat           { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .hero-stat:last-child{ border-bottom: none; }
+  .hero-search-row     { flex-direction: column; }
+  .cta-band-actions    { flex-direction: column; }
+  .pha-grid            { grid-template-columns: 1fr; }
+}
+
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ════════════════════════════════════════
+     HERO
+════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-grain"></div>
+  <div class="hero-accent-line"></div>
+
+  <div class="container">
+    <div class="hero-inner">
+
+      <!-- Gauche -->
+      <div>
+        <div class="hero-pill afu">
+          <div class="hero-pill-pulse"></div>
+          Disponible au Gabon &amp; Afrique Centrale
+        </div>
+
+        <h1 class="hero-h1 afu d1">
+          Vos médicaments,<br />
+          <em class="hero-h1-em">disponibles</em><br />
+          en temps réel
+        </h1>
+
+        <p class="hero-sub afu d2">
+          Localisez les pharmacies proches de vous, vérifiez les stocks en direct,
+          comparez les prix et réservez en quelques secondes.
+        </p>
+
+        <div class="hero-search-box afu d3">
+          <p class="hero-search-eyebrow">Rechercher un médicament</p>
+          <form action="{% url 'pharmacies:search' %}" method="GET">
+            <div class="hero-search-row">
+              <div class="hero-search-field">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" name="q" id="heroSearch"
+                       placeholder="Ex: Paracétamol, Amoxicilline…"
+                       autocomplete="off" />
+              </div>
+              <button type="submit" class="hero-search-btn">Rechercher →</button>
+            </div>
+            <div class="hero-tags">
+              <span class="hero-tag-label">Populaire :</span>
+              {% for med in popular_medications %}
+                <button type="button" class="hero-tag-btn"
+                        onclick="document.getElementById('heroSearch').value='{{ med.name }}';this.closest('form').submit()">
+                  {{ med.name }}
+                </button>
+              {% empty %}
+                <button type="button" class="hero-tag-btn" onclick="document.getElementById('heroSearch').value='Paracétamol';this.closest('form').submit()">Paracétamol</button>
+                <button type="button" class="hero-tag-btn" onclick="document.getElementById('heroSearch').value='Amoxicilline';this.closest('form').submit()">Amoxicilline</button>
+                <button type="button" class="hero-tag-btn" onclick="document.getElementById('heroSearch').value='Artémether';this.closest('form').submit()">Artémether</button>
+                <button type="button" class="hero-tag-btn" onclick="document.getElementById('heroSearch').value='Ibuprofène';this.closest('form').submit()">Ibuprofène</button>
+              {% endfor %}
+            </div>
+          </form>
+        </div>
+
+        <div class="hero-stats afu d4">
+          <div class="hero-stat">
+            <div class="hero-stat-val">{{ total_pharmacies|default:"120" }}<span>+</span></div>
+            <div class="hero-stat-lbl">Pharmacies partenaires</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">3<span>500+</span></div>
+            <div class="hero-stat-lbl">Médicaments référencés</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">98<span>%</span></div>
+            <div class="hero-stat-lbl">Satisfaction client</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Droite — card live -->
+      <div class="hero-visual-card">
+        <div class="hvc-topbar">
+          <div class="hvc-topbar-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            Pharmacies autour de vous
+          </div>
+          <div class="live-indicator">
+            <div class="live-dot"></div> LIVE
+          </div>
+        </div>
+
+    
+        <div class="hvc-map-illustration">
+        {% include "components/_map.html" with map_id="heroMap" map_center_json=map_center_json map_zoom=map_zoom map_markers_json=map_markers_json %}
+        </div>
+
+
+        <div class="hvc-list">
+          {% for pharmacy in nearby_pharmacies|slice:":3" %}
+            <a href="{% url 'pharmacies:pharmacy_detail' pharmacy.id %}" class="hvc-item">
+              <div class="hvc-icon" style="background:var(--navy-pale);">
+                {% if pharmacy.logo %}
+                  <img src="{{ pharmacy.logo.url }}" width="20" height="20" alt="Pharmacie logo" />
+                {% else %}
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.6">
+                    <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
+                    <path d="M3 9l2-5h14l2 5"/>
+                    <line x1="12" y1="9" x2="12" y2="20"/>
+                    <line x1="3" y1="14" x2="21" y2="14"/>
+                  </svg>
+                {% endif %}
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div class="hvc-name">{{ pharmacy.name }}</div>
+                <div class="hvc-meta">
+                  {{ pharmacy.city }} · {% if pharmacy.is_open_24h %}Ouvert 24h{% else %}Ferme {{ pharmacy.closing_time|time:"H:i" }}{% endif %}
+                </div>
+              </div>
+              <span class="badge {% if pharmacy.is_verified %}badge-green{% else %}badge-sand{% endif %}">
+                {% if pharmacy.is_verified %}✓{% else %}?{% endif %}
+              </span>
+            </a>
+          {% empty %}
+            <a class="hvc-item" href="#">
+              <div class="hvc-icon" style="background:var(--navy-pale);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.6"><path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/><path d="M3 9l2-5h14l2 5"/><line x1="12" y1="9" x2="12" y2="20"/><line x1="3" y1="14" x2="21" y2="14"/></svg>
+              </div>
+              <div><div class="hvc-name">Pharmacie Centrale</div><div class="hvc-meta">Libreville · Ouvert 24h</div></div>
+              <span class="badge badge-green">✓</span>
+            </a>
+            <a class="hvc-item" href="#">
+              <div class="hvc-icon" style="background:var(--green-pale);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6"><path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/><path d="M3 9l2-5h14l2 5"/><line x1="12" y1="9" x2="12" y2="20"/><line x1="3" y1="14" x2="21" y2="14"/></svg>
+              </div>
+              <div><div class="hvc-name">Pharmacie de la Paix</div><div class="hvc-meta">Libreville · Ferme 20:00</div></div>
+              <span class="badge badge-green">✓</span>
+            </a>
+            <a class="hvc-item" href="#">
+              <div class="hvc-icon" style="background:var(--gold-pale);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.6"><path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/><path d="M3 9l2-5h14l2 5"/><line x1="12" y1="9" x2="12" y2="20"/><line x1="3" y1="14" x2="21" y2="14"/></svg>
+              </div>
+              <div><div class="hvc-name">Pharmacie du Port</div><div class="hvc-meta">Owendo · Ferme 19:00</div></div>
+              <span class="badge badge-sand">En attente</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     COMMENT ÇA MARCHE
+════════════════════════════════════════ -->
+<section class="section" style="background:var(--sand);">
+  <div class="container">
+    <div class="section-eyebrow"><span class="section-eyebrow-bar"></span>Comment ça marche</div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+      <h2 class="section-h2">Simple, rapide,<br /><em>efficace</em></h2>
+      <a href="{% url 'how_it_works' %}" class="btn btn-outline btn-sm">En savoir plus →</a>
+    </div>
+
+    <div class="steps-wrap">
+
+      <div class="step">
+        <div class="step-number step-n-1">01</div>
+        <div class="step-illus">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <rect width="64" height="64" rx="16" fill="var(--navy-pale)"/>
+            <rect x="10" y="22" width="44" height="20" rx="6" fill="white" stroke="var(--navy-tint)" stroke-width="1.5"/>
+            <circle cx="22" cy="32" r="5" stroke="var(--navy)" stroke-width="2"/>
+            <line x1="25.5" y1="35.5" x2="29" y2="39" stroke="var(--navy)" stroke-width="2" stroke-linecap="round"/>
+            <rect x="32" y="29" width="16" height="2.5" rx="1.25" fill="var(--navy-tint)"/>
+            <rect x="32" y="34" width="10" height="2" rx="1" fill="var(--navy-tint)"/>
+          </svg>
+        </div>
+        <div class="step-title">Recherchez</div>
+        <p class="step-desc">Tapez le nom du médicament, même approximatif. Notre moteur intelligent trouve et suggère en temps réel.</p>
+        <div class="step-connector">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number step-n-2">02</div>
+        <div class="step-illus">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <rect width="64" height="64" rx="16" fill="var(--green-pale)"/>
+            <rect x="8" y="10" width="48" height="36" rx="6" fill="white" stroke="var(--green-tint)" stroke-width="1.5"/>
+            <path d="M8 28 Q32 24 56 28" stroke="var(--green-tint)" stroke-width="2"/>
+            <line x1="32" y1="10" x2="32" y2="46" stroke="var(--green-tint)" stroke-width="2"/>
+            <path d="M32 13 C28 13 25 16 25 20 C25 26 32 32 32 32 C32 32 39 26 39 20 C39 16 36 13 32 13Z" fill="var(--green)" opacity="0.9"/>
+            <circle cx="32" cy="20" r="3" fill="white"/>
+          </svg>
+        </div>
+        <div class="step-title">Localisez</div>
+        <p class="step-desc">Visualisez sur la carte toutes les pharmacies proches ayant ce médicament en stock, avec prix et délais.</p>
+        <div class="step-connector">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number step-n-3">03</div>
+        <div class="step-illus">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <rect width="64" height="64" rx="16" fill="var(--gold-pale)"/>
+            <rect x="18" y="8" width="28" height="48" rx="7" fill="white" stroke="#E8D190" stroke-width="1.5"/>
+            <rect x="22" y="14" width="20" height="12" rx="3" fill="var(--gold-pale)"/>
+            <rect x="22" y="30" width="20" height="7" rx="3" fill="var(--gold-pale)"/>
+            <rect x="22" y="42" width="20" height="8" rx="4" fill="var(--gold-2)"/>
+            <polyline points="27,46 30,49 37,43" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="step-title">Réservez &amp; Payez</div>
+        <p class="step-desc">Réservez en un clic et réglez via Airtel Money, Mobicash ou carte bancaire. Récupérez sans attendre.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     MÉDICAMENTS POPULAIRES
+════════════════════════════════════════ -->
+<section class="section" style="background:white;">
+  <div class="container">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+      <div>
+        <div class="section-eyebrow"><span class="section-eyebrow-bar"></span>Médicaments</div>
+        <h2 class="section-h2">Les plus <em>recherchés</em></h2>
+      </div>
+      <a href="{% url 'pharmacies:search' %}" class="btn btn-outline btn-sm">Voir tout →</a>
+    </div>
+
+    <div class="meds-track">
+      {% for med in popular_medications %}
+        <a href="{% url 'pharmacies:search' %}?q={{ med.name }}" class="med-card">
+          <div class="med-visual">
+            {% if med.image %}
+              <img src="{{ med.image.url }}" alt="{{ med.name }}" />
+            {% else %}
+              <svg class="med-visual-placeholder" viewBox="0 0 80 80" fill="none">
+                <rect x="10" y="28" width="60" height="24" rx="12" fill="#0C1F3F" opacity="0.12"/>
+                <rect x="10" y="28" width="30" height="24" rx="12" fill="#0C1F3F" opacity="0.18"/>
+              </svg>
+            {% endif %}
+          </div>
+          <div class="med-body">
+            <div class="med-name">
+              {{ med.name }}
+              {% if med.dosage %}<span class="med-name-dosage">{{ med.dosage }}</span>{% endif %}
+            </div>
+            <div class="med-category">{{ med.category|default:"Médicament" }}</div>
+            <div class="med-footer">
+              <div>
+                <span class="med-price">{{ med.pharmacy_stocks.first.price|default:"—" }}</span>
+                <span class="med-price-currency">XAF</span>
+              </div>
+              {% if med.requires_prescription %}
+                <span class="med-badge med-badge-rx">Ordonnance</span>
+              {% else %}
+                <span class="med-badge med-badge-otc">Sans ordo.</span>
+              {% endif %}
+            </div>
+          </div>
+        </a>
+      {% empty %}
+        <!-- Démo : Paracétamol -->
+        <a class="med-card" href="{% url 'pharmacies:search' %}?q=Paracétamol">
+          <div class="med-visual">
+            <svg width="130" height="100" viewBox="0 0 130 100" fill="none" style="filter:drop-shadow(0 6px 12px rgba(0,0,0,0.10))">
+              <rect x="10" y="18" width="110" height="64" rx="8" fill="white" stroke="#D8DCE8" stroke-width="1.5"/>
+              <rect x="10" y="18" width="110" height="22" rx="8" fill="#1A7A5E"/>
+              <rect x="10" y="32" width="110" height="8" fill="#1A7A5E"/>
+              <text x="65" y="34" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="white">PARACÉTAMOL</text>
+              <text x="65" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#4A5568">500 mg — Comprimés</text>
+              <rect x="24" y="64" width="36" height="10" rx="3" fill="#E8F5F1"/>
+              <text x="42" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#1A7A5E" font-weight="bold">Douleur</text>
+              <rect x="66" y="64" width="38" height="10" rx="3" fill="#EDF2FA"/>
+              <text x="85" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#4A5568">16 comprimés</text>
+            </svg>
+          </div>
+          <div class="med-body">
+            <div class="med-name">Paracétamol <span class="med-name-dosage">500mg</span></div>
+            <div class="med-category">Antalgique · Antipyrétique</div>
+            <div class="med-footer">
+              <div><span class="med-price">1 200</span><span class="med-price-currency">XAF</span></div>
+              <span class="med-badge med-badge-otc">Sans ordo.</span>
+            </div>
+          </div>
+        </a>
+        <!-- Démo : Amoxicilline -->
+        <a class="med-card" href="{% url 'pharmacies:search' %}?q=Amoxicilline">
+          <div class="med-visual">
+            <svg width="130" height="100" viewBox="0 0 130 100" fill="none" style="filter:drop-shadow(0 6px 12px rgba(0,0,0,0.10))">
+              <rect x="10" y="18" width="110" height="64" rx="8" fill="white" stroke="#D8DCE8" stroke-width="1.5"/>
+              <rect x="10" y="18" width="110" height="22" rx="8" fill="#C0392B"/>
+              <rect x="10" y="32" width="110" height="8" fill="#C0392B"/>
+              <text x="65" y="34" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="white">AMOXICILLINE</text>
+              <text x="65" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#4A5568">500 mg — Gélules</text>
+              <rect x="24" y="64" width="36" height="10" rx="3" fill="#FFF0F0"/>
+              <text x="42" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#C0392B" font-weight="bold">Antibiotique</text>
+              <rect x="66" y="64" width="38" height="10" rx="3" fill="#EDF2FA"/>
+              <text x="85" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#4A5568">12 gélules</text>
+            </svg>
+          </div>
+          <div class="med-body">
+            <div class="med-name">Amoxicilline <span class="med-name-dosage">500mg</span></div>
+            <div class="med-category">Antibiotique</div>
+            <div class="med-footer">
+              <div><span class="med-price">3 500</span><span class="med-price-currency">XAF</span></div>
+              <span class="med-badge med-badge-rx">Ordonnance</span>
+            </div>
+          </div>
+        </a>
+        <!-- Démo : Artémether -->
+        <a class="med-card" href="{% url 'pharmacies:search' %}?q=Artémether">
+          <div class="med-visual">
+            <svg width="130" height="100" viewBox="0 0 130 100" fill="none" style="filter:drop-shadow(0 6px 12px rgba(0,0,0,0.10))">
+              <rect x="10" y="18" width="110" height="64" rx="8" fill="white" stroke="#D8DCE8" stroke-width="1.5"/>
+              <rect x="10" y="18" width="110" height="22" rx="8" fill="#7B3F00"/>
+              <rect x="10" y="32" width="110" height="8" fill="#7B3F00"/>
+              <text x="65" y="34" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" font-weight="bold" fill="white">ARTÉMETHER</text>
+              <text x="65" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#4A5568">80mg / Luméfantrine</text>
+              <rect x="24" y="64" width="38" height="10" rx="3" fill="#FFF8EC"/>
+              <text x="43" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#7B3F00" font-weight="bold">Antipaludéen</text>
+              <rect x="68" y="64" width="36" height="10" rx="3" fill="#EDF2FA"/>
+              <text x="86" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#4A5568">24 comprimés</text>
+            </svg>
+          </div>
+          <div class="med-body">
+            <div class="med-name">Artémether <span class="med-name-dosage">80mg</span></div>
+            <div class="med-category">Antipaludéen</div>
+            <div class="med-footer">
+              <div><span class="med-price">5 400</span><span class="med-price-currency">XAF</span></div>
+              <span class="med-badge med-badge-rx">Ordonnance</span>
+            </div>
+          </div>
+        </a>
+        <!-- Démo : Ibuprofène -->
+        <a class="med-card" href="{% url 'pharmacies:search' %}?q=Ibuprofène">
+          <div class="med-visual">
+            <svg width="130" height="100" viewBox="0 0 130 100" fill="none" style="filter:drop-shadow(0 6px 12px rgba(0,0,0,0.10))">
+              <rect x="10" y="18" width="110" height="64" rx="8" fill="white" stroke="#D8DCE8" stroke-width="1.5"/>
+              <rect x="10" y="18" width="110" height="22" rx="8" fill="#2471A3"/>
+              <rect x="10" y="32" width="110" height="8" fill="#2471A3"/>
+              <text x="65" y="34" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="white">IBUPROFÈNE</text>
+              <text x="65" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#4A5568">400 mg — Comprimés</text>
+              <rect x="24" y="64" width="38" height="10" rx="3" fill="#EBF5FB"/>
+              <text x="43" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#2471A3" font-weight="bold">Anti-inflammatoire</text>
+              <rect x="68" y="64" width="36" height="10" rx="3" fill="#EDF2FA"/>
+              <text x="86" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#4A5568">20 comprimés</text>
+            </svg>
+          </div>
+          <div class="med-body">
+            <div class="med-name">Ibuprofène <span class="med-name-dosage">400mg</span></div>
+            <div class="med-category">Anti-inflammatoire</div>
+            <div class="med-footer">
+              <div><span class="med-price">1 800</span><span class="med-price-currency">XAF</span></div>
+              <span class="med-badge med-badge-otc">Sans ordo.</span>
+            </div>
+          </div>
+        </a>
+        <!-- Démo : Metformine -->
+        <a class="med-card" href="{% url 'pharmacies:search' %}?q=Metformine">
+          <div class="med-visual">
+            <svg width="130" height="100" viewBox="0 0 130 100" fill="none" style="filter:drop-shadow(0 6px 12px rgba(0,0,0,0.10))">
+              <rect x="10" y="18" width="110" height="64" rx="8" fill="white" stroke="#D8DCE8" stroke-width="1.5"/>
+              <rect x="10" y="18" width="110" height="22" rx="8" fill="#117A8B"/>
+              <rect x="10" y="32" width="110" height="8" fill="#117A8B"/>
+              <text x="65" y="34" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="white">METFORMINE</text>
+              <text x="65" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#4A5568">850 mg — Comprimés</text>
+              <rect x="24" y="64" width="30" height="10" rx="3" fill="#E8F8FB"/>
+              <text x="39" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#117A8B" font-weight="bold">Diabète</text>
+              <rect x="60" y="64" width="44" height="10" rx="3" fill="#EDF2FA"/>
+              <text x="82" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#4A5568">30 comprimés</text>
+            </svg>
+          </div>
+          <div class="med-body">
+            <div class="med-name">Metformine <span class="med-name-dosage">850mg</span></div>
+            <div class="med-category">Diabète</div>
+            <div class="med-footer">
+              <div><span class="med-price">7 800</span><span class="med-price-currency">XAF</span></div>
+              <span class="med-badge med-badge-rx">Ordonnance</span>
+            </div>
+          </div>
+        </a>
+        <!-- Démo : Oméprazole -->
+        <a class="med-card" href="{% url 'pharmacies:search' %}?q=Oméprazole">
+          <div class="med-visual">
+            <svg width="130" height="100" viewBox="0 0 130 100" fill="none" style="filter:drop-shadow(0 6px 12px rgba(0,0,0,0.10))">
+              <rect x="10" y="18" width="110" height="64" rx="8" fill="white" stroke="#D8DCE8" stroke-width="1.5"/>
+              <rect x="10" y="18" width="110" height="22" rx="8" fill="#6C3483"/>
+              <rect x="10" y="32" width="110" height="8" fill="#6C3483"/>
+              <text x="65" y="34" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="white">OMÉPRAZOLE</text>
+              <text x="65" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#4A5568">20 mg — Gélules</text>
+              <rect x="24" y="64" width="40" height="10" rx="3" fill="#F5EEF8"/>
+              <text x="44" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#6C3483" font-weight="bold">Gastro-intestinal</text>
+              <rect x="70" y="64" width="36" height="10" rx="3" fill="#EDF2FA"/>
+              <text x="88" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#4A5568">14 gélules</text>
+            </svg>
+          </div>
+          <div class="med-body">
+            <div class="med-name">Oméprazole <span class="med-name-dosage">20mg</span></div>
+            <div class="med-category">Gastro-intestinal</div>
+            <div class="med-footer">
+              <div><span class="med-price">2 600</span><span class="med-price-currency">XAF</span></div>
+              <span class="med-badge med-badge-otc">Sans ordo.</span>
+            </div>
+          </div>
+        </a>
+        <!-- Démo : Amlodipine -->
+        <a class="med-card" href="{% url 'pharmacies:search' %}?q=Amlodipine">
+          <div class="med-visual">
+            <svg width="130" height="100" viewBox="0 0 130 100" fill="none" style="filter:drop-shadow(0 6px 12px rgba(0,0,0,0.10))">
+              <rect x="10" y="18" width="110" height="64" rx="8" fill="white" stroke="#D8DCE8" stroke-width="1.5"/>
+              <rect x="10" y="18" width="110" height="22" rx="8" fill="#B03A2E"/>
+              <rect x="10" y="32" width="110" height="8" fill="#B03A2E"/>
+              <text x="65" y="34" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="white">AMLODIPINE</text>
+              <text x="65" y="56" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="#4A5568">5 mg — Comprimés</text>
+              <rect x="24" y="64" width="40" height="10" rx="3" fill="#FDEDEC"/>
+              <text x="44" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#B03A2E" font-weight="bold">Hypertension</text>
+              <rect x="70" y="64" width="36" height="10" rx="3" fill="#EDF2FA"/>
+              <text x="88" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" fill="#4A5568">30 comprimés</text>
+            </svg>
+          </div>
+          <div class="med-body">
+            <div class="med-name">Amlodipine <span class="med-name-dosage">5mg</span></div>
+            <div class="med-category">Hypertension</div>
+            <div class="med-footer">
+              <div><span class="med-price">4 200</span><span class="med-price-currency">XAF</span></div>
+              <span class="med-badge med-badge-rx">Ordonnance</span>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     FEATURE BAND
+════════════════════════════════════════ -->
+<section class="section" style="background:var(--sand);">
+  <div class="feature-band">
+    <div class="feature-band-photo"></div>
+    <div class="feature-band-content">
+      <div class="feature-band-eyebrow">Pourquoi PharMap ?</div>
+      <h2 class="feature-band-title">La santé ne peut pas<br /><em>attendre</em></h2>
+      <p class="feature-band-desc">En Afrique centrale, trouver un médicament critique peut prendre des heures. PharMap change cela.</p>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-item-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6EDCBC" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <div class="feature-item-title">Stock en temps réel</div>
+            <div class="feature-item-text">Les pharmacies mettent à jour leur stock directement sur la plateforme.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-item-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6EDCBC" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <div class="feature-item-title">Réservation en 30 secondes</div>
+            <div class="feature-item-text">Bloquez votre médicament, payez en mobile money, récupérez sans queue.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-item-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6EDCBC" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <div class="feature-item-title">Pharmacies vérifiées</div>
+            <div class="feature-item-text">Chaque partenaire est validé par notre équipe avant d'apparaître.</div>
+          </div>
+        </div>
+      </div>
+      <a href="{% url 'how_it_works' %}" class="btn btn-green btn-lg" style="align-self:flex-start;">
+        Découvrir comment ça marche →
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     PHARMACIES PARTENAIRES
+════════════════════════════════════════ -->
+<section class="section" style="background:white;">
+  <div class="container">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+      <div>
+        <div class="section-eyebrow"><span class="section-eyebrow-bar"></span>Partenaires</div>
+        <h2 class="section-h2">Pharmacies <em>vérifiées</em></h2>
+      </div>
+      <a href="{% url 'pharmacies:pharmacy_list' %}" class="btn btn-outline btn-sm">Voir toutes →</a>
+    </div>
+
+    <div class="pha-grid">
+      {% for pharmacy in featured_pharmacies %}
+        <a href="{% url 'pharmacies:pharmacy_detail' pharmacy.id %}" class="pha-card">
+          <div class="pha-head">
+            <div class="pha-head-img"
+                 style="background-image:url('{% if pharmacy.logo %}{{ pharmacy.logo.url }}{% else %}https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=600&q=80&auto=format&fit=crop{% endif %}');"></div>
+            <div class="pha-head-overlay"></div>
+            {% if pharmacy.is_verified %}<div class="pha-verified">✓ Vérifié</div>{% endif %}
+          </div>
+          <div class="pha-body">
+            <div class="pha-name">{{ pharmacy.name }}</div>
+            <div class="pha-addr">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              {{ pharmacy.address|truncatechars:42 }}
+            </div>
+            <div class="pha-meta">
+              <div class="pha-rating">
+                <span class="stars">★★★★★</span>
+                <span>{{ pharmacy.average_rating|floatformat:1 }}</span>
+                <span class="text-muted">({{ pharmacy.total_reviews }})</span>
+              </div>
+              {% if pharmacy.is_open_24h %}
+                <span class="badge badge-green">Ouvert 24h</span>
+              {% else %}
+                <span class="text-xs text-muted">Ferme {{ pharmacy.closing_time|time:"H:i" }}</span>
+              {% endif %}
+            </div>
+            <div class="pha-footer">
+              <span class="btn btn-outline btn-sm" style="flex:1;justify-content:center;pointer-events:none;">Voir le stock</span>
+              <button class="btn btn-primary btn-sm"
+                      onclick="event.preventDefault();window.location='tel:{{ pharmacy.phone }}'">
+                Appeler
+              </button>
+            </div>
+          </div>
+        </a>
+      {% empty %}
+        {% for i in "123" %}
+          <a class="pha-card" href="#">
+            <div class="pha-head">
+              <div class="pha-head-img"
+                   style="background-image:url('https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=600&q=80&auto=format&fit=crop');"></div>
+              <div class="pha-head-overlay"></div>
+              <div class="pha-verified">✓ Vérifié</div>
+            </div>
+            <div class="pha-body">
+              <div class="pha-name">{% if forloop.counter == 1 %}Pharmacie Centrale{% elif forloop.counter == 2 %}Pharmacie de la Paix{% else %}Pharmacie du Port{% endif %}</div>
+              <div class="pha-addr">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {% if forloop.counter == 1 %}Boulevard Triomphal, Libreville{% elif forloop.counter == 2 %}Quartier Louis, Libreville{% else %}Avenue du Port, Owendo{% endif %}
+              </div>
+              <div class="pha-meta">
+                <div class="pha-rating">
+                  <span class="stars">★★★★★</span>
+                  {% if forloop.counter == 1 %}4.9{% elif forloop.counter == 2 %}4.7{% else %}4.6{% endif %}
+                  <span class="text-muted">({{ forloop.counter|add:"56" }})</span>
+                </div>
+                <span class="badge badge-green">Ouvert 24h</span>
+              </div>
+              <div class="pha-footer">
+                <span class="btn btn-outline btn-sm" style="flex:1;justify-content:center;pointer-events:none;">Voir le stock</span>
+                <button class="btn btn-primary btn-sm">Appeler</button>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     TÉMOIGNAGES
+════════════════════════════════════════ -->
+<section class="section" style="background:var(--sand);">
+  <div class="container">
+    <div class="section-eyebrow"><span class="section-eyebrow-bar"></span>Témoignages</div>
+    <h2 class="section-h2">Ce que disent<br /><em>nos utilisateurs</em></h2>
+
+    <div class="testi-grid">
+      <div class="testi-card afu">
+        <span class="testi-quote">"</span>
+        <p class="testi-text">Grâce à PharMap, j'ai trouvé le médicament de ma fille en moins de 5 minutes. Avant je faisais le tour de toutes les pharmacies de Libreville !</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--navy),var(--green));">MK</div>
+          <div>
+            <div class="testi-name">Marie-Claire K.</div>
+            <div class="testi-role">Mère de famille · Libreville</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card afu d2">
+        <span class="testi-quote">"</span>
+        <p class="testi-text">Parfait pour les patients chroniques. Je vérifie le stock avant de me déplacer. Révolutionnaire pour le Gabon, enfin une vraie solution digitale.</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--green),#0d6b52);">JN</div>
+          <div>
+            <div class="testi-name">Jean-Paul N.</div>
+            <div class="testi-role">Patient diabétique · Owendo</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card afu d3">
+        <span class="testi-quote">"</span>
+        <p class="testi-text">Interface intuitive même pour les moins connectés. Le paiement par Airtel Money, c'est exactement ce dont on avait besoin ici en Afrique.</p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--gold),#8a5c00);">AB</div>
+          <div>
+            <div class="testi-name">Antoinette B.</div>
+            <div class="testi-role">Infirmière · Port-Gentil</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     CTA — APPLICATION
+════════════════════════════════════════ -->
+<section class="section-sm" style="background:white;">
+  <div class="container">
+    <div class="cta-band">
+      <div class="cta-band-content">
+        <div class="cta-band-eyebrow">Application mobile &amp; desktop</div>
+        <h2 class="cta-band-title">PharMap dans votre poche,<br />partout au Gabon</h2>
+        <p class="cta-band-desc">Installez l'application en 10 secondes. Fonctionne hors connexion, disponible sur Android, iOS et navigateur.</p>
+      </div>
+      <div class="cta-band-actions">
+        <a href="#" class="cta-store-btn" onclick="installPWA(event)">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="7" fill="rgba(255,255,255,0.1)"/>
+            <rect x="8" y="5" width="12" height="19" rx="3" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+            <line x1="11" y1="21" x2="17" y2="21" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <div>
+            <div class="cta-store-label-sm">Installer</div>
+            <div class="cta-store-label">PharMap App</div>
+          </div>
+        </a>
+        <a href="{% url 'pharmacies:search' %}" class="cta-store-btn">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="7" fill="rgba(255,255,255,0.1)"/>
+            <circle cx="14" cy="14" r="7" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+            <path d="M14 7 Q18 14 14 21" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" fill="none"/>
+            <path d="M14 7 Q10 14 14 21" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" fill="none"/>
+            <line x1="7" y1="14" x2="21" y2="14" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
+          </svg>
+          <div>
+            <div class="cta-store-label-sm">Utiliser sur</div>
+            <div class="cta-store-label">Navigateur web</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  /* ── Navbar transparente sur hero ── */
+  (function () {
+    const nav = document.getElementById('mainNavbar');
+    if (!nav) return;
+    nav.classList.add('navbar-transparent');
+    window.addEventListener('scroll', function () {
+      nav.classList.toggle('navbar-transparent', window.scrollY <= 60);
+    }, { passive: true });
+  })();
+
+  /* ── PWA Install ── */
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+  function installPWA(e) {
+    e.preventDefault();
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function () { deferredPrompt = null; });
+    } else {
+      alert("Menu navigateur → « Ajouter à l'écran d'accueil »");
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,788 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Comment ça marche — PharMap{% endblock %}
+{% block meta_description %}Découvrez comment PharMap vous permet de trouver vos médicaments en temps réel au Gabon en 3 étapes simples.{% endblock %}
+{% block extra_css %}
+<style>
+
+/* ════════════════════════════════════════
+   PAGE HERO — Comment ça marche
+════════════════════════════════════════ */
+.hiw-hero {
+  position: relative;
+  background: var(--navy);
+  overflow: hidden;
+  padding: 100px 0 80px;
+}
+.hiw-hero-bg {
+  position: absolute; inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=1800&q=80&auto=format&fit=crop');
+  background-size: cover; background-position: center 40%;
+  opacity: 0.12;
+}
+.hiw-hero-glow {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(26,122,94,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(184,132,28,0.08) 0%, transparent 70%);
+}
+.hiw-hero-inner {
+  position: relative; z-index: 2;
+  max-width: 760px;
+}
+.hiw-hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 1.8px; text-transform: uppercase; color: #6EDCBC;
+  margin-bottom: 20px;
+}
+.hiw-hero-eyebrow-bar { width: 20px; height: 2px; background: var(--gold-2); border-radius: 2px; }
+.hiw-hero-h1 {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  color: white; font-weight: 300;
+  line-height: 1.1; letter-spacing: -1.5px;
+  margin-bottom: 20px;
+}
+.hiw-hero-h1 em { color: #6EDCBC; font-style: italic; }
+.hiw-hero-sub {
+  font-size: 1.05rem; color: rgba(255,255,255,0.5);
+  line-height: 1.8; max-width: 520px;
+}
+
+/* Stats band */
+.hiw-stats-band {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 1px; background: var(--line-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg); overflow: hidden;
+  margin-top: 60px;
+}
+.hiw-stat {
+  background: white; padding: 32px 28px;
+  display: flex; flex-direction: column; gap: 6px;
+  transition: var(--t);
+}
+.hiw-stat:hover { background: var(--navy-pale); }
+.hiw-stat-val {
+  font-family: 'Fraunces', serif;
+  font-size: 2.4rem; color: var(--navy);
+  line-height: 1; letter-spacing: -1px; font-weight: 300;
+}
+.hiw-stat-val span { color: var(--green); }
+.hiw-stat-lbl {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; color: var(--ink-4); font-weight: 500; letter-spacing: 0.2px;
+}
+
+/* ════════════════════════════════════════
+   SECTION : PROCESSUS DÉTAILLÉ
+════════════════════════════════════════ */
+.process-section { padding: 100px 0; background: var(--sand); }
+
+.process-step {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px; align-items: center;
+  padding: 72px 0;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+}
+.process-step:last-child { border-bottom: none; }
+.process-step.reverse { direction: rtl; }
+.process-step.reverse > * { direction: ltr; }
+
+/* Numéro flottant */
+.process-step-num {
+  position: absolute;
+  top: 60px; left: 50%; transform: translateX(-50%);
+  font-family: 'Fraunces', serif;
+  font-size: 7rem; font-weight: 300; font-style: italic;
+  color: var(--line); line-height: 1;
+  pointer-events: none; user-select: none;
+  z-index: 0;
+}
+
+.process-content { position: relative; z-index: 1; }
+.process-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 1.6px; text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.process-step-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(1.7rem, 2.5vw, 2.2rem);
+  color: var(--ink); line-height: 1.2;
+  letter-spacing: -0.5px; font-weight: 400;
+  margin-bottom: 16px;
+}
+.process-step-title em { font-style: italic; color: var(--green); }
+.process-step-desc {
+  font-size: 0.95rem; color: var(--ink-3);
+  line-height: 1.85; margin-bottom: 28px;
+  max-width: 440px;
+}
+.process-features { display: flex; flex-direction: column; gap: 12px; }
+.process-feature {
+  display: flex; align-items: flex-start; gap: 11px;
+  font-size: 0.875rem; color: var(--ink-3); line-height: 1.6;
+}
+.process-feature-dot {
+  width: 22px; height: 22px; flex-shrink: 0; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; margin-top: 1px;
+}
+
+/* Visual box */
+.process-visual {
+  position: relative; z-index: 1;
+  border-radius: var(--r-xl); overflow: hidden;
+  box-shadow: var(--sh-4);
+}
+.process-photo {
+  width: 100%; height: 380px;
+  background-size: cover; background-position: center;
+  display: block;
+}
+.process-visual-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(12,31,63,0.45) 0%, transparent 50%);
+}
+.process-visual-badge {
+  position: absolute; bottom: 20px; left: 20px;
+  background: white; border-radius: var(--r-sm);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: var(--sh-2);
+  font-family: 'Syne', sans-serif;
+}
+.process-badge-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.process-badge-title { font-size: 0.8rem; font-weight: 700; color: var(--ink); }
+.process-badge-sub { font-size: 0.68rem; color: var(--ink-4); margin-top: 1px; }
+
+/* ════════════════════════════════════════
+   SECTION : FONCTIONNALITÉS
+════════════════════════════════════════ */
+.features-section { padding: 100px 0; background: white; }
+.features-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 24px; margin-top: 52px;
+}
+.feature-card {
+  background: var(--sand);
+  border-radius: var(--r-lg);
+  padding: 36px 32px;
+  border: 1px solid var(--line);
+  transition: var(--t);
+}
+.feature-card:hover {
+  background: white;
+  box-shadow: var(--sh-2);
+  transform: translateY(-4px);
+}
+.feature-card-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 22px;
+}
+.feature-card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem; font-weight: 700; color: var(--ink);
+  margin-bottom: 10px;
+}
+.feature-card-desc {
+  font-size: 0.875rem; color: var(--ink-3); line-height: 1.78;
+}
+
+/* ════════════════════════════════════════
+   SECTION : POUR LES PHARMACIES
+════════════════════════════════════════ */
+.pharmacy-cta-section {
+  padding: 100px 0; background: var(--sand);
+}
+.pharmacy-cta-inner {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 72px; align-items: center;
+}
+.pharmacy-cta-photo-wrap {
+  position: relative;
+  border-radius: var(--r-xl); overflow: hidden;
+  box-shadow: var(--sh-4);
+}
+.pharmacy-cta-photo {
+  width: 100%; height: 480px;
+  background-image: url('https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=900&q=80&auto=format&fit=crop');
+  background-size: cover; background-position: center;
+  display: block;
+}
+.pharmacy-cta-photo-badge {
+  position: absolute; top: 24px; left: 24px;
+  background: var(--navy); color: white;
+  border-radius: var(--r-sm); padding: 12px 18px;
+  font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700;
+  display: flex; align-items: center; gap: 8px; box-shadow: var(--sh-2);
+}
+.pharmacy-cta-eyebrow { color: var(--gold); font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; margin-bottom: 16px; }
+.pharmacy-cta-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(1.8rem, 2.5vw, 2.5rem);
+  color: var(--ink); line-height: 1.18; letter-spacing: -0.5px;
+  font-weight: 400; margin-bottom: 18px;
+}
+.pharmacy-cta-title em { font-style: italic; color: var(--navy); }
+.pharmacy-cta-desc { font-size: 0.95rem; color: var(--ink-3); line-height: 1.8; margin-bottom: 32px; }
+.pharmacy-benefits { display: flex; flex-direction: column; gap: 16px; margin-bottom: 36px; }
+.pharmacy-benefit {
+  display: flex; align-items: flex-start; gap: 14px;
+  background: white; border-radius: var(--r); padding: 18px 20px;
+  border: 1px solid var(--line); transition: var(--t);
+}
+.pharmacy-benefit:hover { box-shadow: var(--sh-1); border-color: var(--navy-tint); }
+.pharmacy-benefit-icon {
+  width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.pharmacy-benefit-title { font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+.pharmacy-benefit-desc { font-size: 0.8rem; color: var(--ink-4); line-height: 1.6; }
+
+/* ════════════════════════════════════════
+   SECTION : FAQ
+════════════════════════════════════════ */
+.faq-section { padding: 100px 0; background: white; }
+.faq-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin-top: 52px;
+}
+.faq-item {
+  background: var(--sand); border-radius: var(--r);
+  padding: 28px 28px;
+  border: 1px solid var(--line); cursor: pointer;
+  transition: var(--t);
+}
+.faq-item:hover { background: white; box-shadow: var(--sh-1); }
+.faq-item[open] { background: white; box-shadow: var(--sh-2); }
+.faq-question {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.875rem; font-weight: 700; color: var(--ink);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; list-style: none; cursor: pointer; user-select: none;
+}
+.faq-question::-webkit-details-marker { display: none; }
+.faq-chevron { flex-shrink: 0; transition: transform 0.2s var(--ease); }
+.faq-item[open] .faq-chevron { transform: rotate(180deg); }
+.faq-answer { font-size: 0.875rem; color: var(--ink-3); line-height: 1.78; padding-top: 14px; }
+
+/* ════════════════════════════════════════
+   SECTION : TÉMOIGNAGE BANDEAU
+════════════════════════════════════════ */
+.quote-band {
+  background: var(--navy);
+  padding: 80px 0;
+  position: relative; overflow: hidden;
+}
+.quote-band::before {
+  content: '"';
+  position: absolute; left: 5%; top: -20px;
+  font-family: 'Fraunces', serif; font-size: 18rem;
+  color: rgba(255,255,255,0.04); line-height: 1;
+  font-style: italic; pointer-events: none;
+}
+.quote-band-inner { max-width: 720px; margin: 0 auto; text-align: center; }
+.quote-band-text {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-style: italic; font-weight: 300;
+  color: white; line-height: 1.5; margin-bottom: 32px;
+}
+.quote-band-author {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+}
+.quote-band-avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--green); display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-weight: 700; color: white; font-size: 0.9rem;
+}
+.quote-band-name { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; color: white; }
+.quote-band-role { font-size: 0.78rem; color: rgba(255,255,255,0.42); margin-top: 2px; }
+
+/* ════════════════════════════════════════
+   CTA FINAL
+════════════════════════════════════════ */
+.hiw-cta {
+  padding: 100px 0; background: var(--sand);
+  text-align: center;
+}
+.hiw-cta-inner { max-width: 640px; margin: 0 auto; }
+.hiw-cta-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  color: var(--ink); line-height: 1.15; letter-spacing: -0.5px;
+  font-weight: 400; margin-bottom: 18px;
+}
+.hiw-cta-title em { font-style: italic; color: var(--green); }
+.hiw-cta-desc { font-size: 1rem; color: var(--ink-3); line-height: 1.75; margin-bottom: 40px; }
+.hiw-cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════ */
+@media (max-width: 1020px) {
+  .hiw-stats-band { grid-template-columns: 1fr 1fr; }
+  .process-step { grid-template-columns: 1fr; gap: 40px; }
+  .process-step.reverse { direction: ltr; }
+  .process-photo { height: 280px; }
+  .features-grid { grid-template-columns: 1fr 1fr; }
+  .pharmacy-cta-inner { grid-template-columns: 1fr; }
+  .pharmacy-cta-photo { height: 300px; }
+  .faq-grid { grid-template-columns: 1fr; }
+  .process-step-num { display: none; }
+}
+@media (max-width: 640px) {
+  .hiw-stats-band { grid-template-columns: 1fr 1fr; }
+  .features-grid { grid-template-columns: 1fr; }
+  .hiw-stat { padding: 22px 18px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ════════════════════════════════════════
+     HERO
+════════════════════════════════════════ -->
+<section class="hiw-hero">
+  <div class="hiw-hero-bg"></div>
+  <div class="hiw-hero-glow"></div>
+  <div class="container">
+    <div class="hiw-hero-inner afu">
+      <div class="hiw-hero-eyebrow"><span class="hiw-hero-eyebrow-bar"></span>Guide d'utilisation</div>
+      <h1 class="hiw-hero-h1">
+        Trouver vos médicaments<br />
+        n'a jamais été aussi <em>simple</em>
+      </h1>
+      <p class="hiw-hero-sub">
+        En 3 étapes, PharMap vous connecte aux pharmacies partenaires du Gabon avec stock en temps réel, géolocalisation et paiement mobile.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section style="background:white; padding: 0; border-bottom: 1px solid var(--line);">
+  <div class="container">
+    <div class="hiw-stats-band" style="margin-top:0; border-radius:0; border:none; border-left:1px solid var(--line-2); border-right:1px solid var(--line-2);">
+      <div class="hiw-stat">
+        <div class="hiw-stat-val">{{ total_pharmacies }}<span>+</span></div>
+        <div class="hiw-stat-lbl">Pharmacies partenaires</div>
+      </div>
+      <div class="hiw-stat">
+        <div class="hiw-stat-val">{{ total_medications }}<span>+</span></div>
+        <div class="hiw-stat-lbl">Médicaments référencés</div>
+      </div>
+      <div class="hiw-stat">
+        <div class="hiw-stat-val">30<span>s</span></div>
+        <div class="hiw-stat-lbl">Temps de réservation moyen</div>
+      </div>
+      <div class="hiw-stat">
+        <div class="hiw-stat-val">98<span>%</span></div>
+        <div class="hiw-stat-lbl">Taux de satisfaction</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     LES 3 ÉTAPES — DÉTAILLÉES
+════════════════════════════════════════ -->
+<section class="process-section">
+  <div class="container">
+    <div style="text-align:center; max-width:600px; margin:0 auto 16px;">
+      <div class="section-eyebrow" style="justify-content:center;">
+        <span class="section-eyebrow-bar"></span>Le processus
+      </div>
+      <h2 class="section-h2">Trois étapes vers<br /><em>votre médicament</em></h2>
+    </div>
+
+    <!-- Étape 1 -->
+    <div class="process-step afu">
+      <div class="process-step-num">01</div>
+      <div class="process-content">
+        <div class="process-eyebrow" style="color:var(--navy);">
+          <div style="width:24px;height:24px;background:var(--navy-pale);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          Étape 1 — Recherche
+        </div>
+        <h3 class="process-step-title">Recherchez votre<br /><em>médicament</em></h3>
+        <p class="process-step-desc">
+          Saisissez le nom du médicament dans notre barre de recherche intelligente. Notre moteur comprend les noms commerciaux, génériques et même les approximations phonétiques.
+        </p>
+        <div class="process-features">
+          <div class="process-feature">
+            <div class="process-feature-dot" style="background:var(--navy-pale);">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            Suggestions automatiques dès les premières lettres
+          </div>
+          <div class="process-feature">
+            <div class="process-feature-dot" style="background:var(--navy-pale);">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            Recherche par DCI (principe actif) ou marque
+          </div>
+          <div class="process-feature">
+            <div class="process-feature-dot" style="background:var(--navy-pale);">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            Filtres par forme galénique, dosage et classe thérapeutique
+          </div>
+        </div>
+        <div style="margin-top:28px;">
+          <a href="{% url 'pharmacies:search' %}" class="btn btn-primary">Essayer la recherche →</a>
+        </div>
+      </div>
+      <div class="process-visual">
+        <div class="process-photo" style="background-image:url('https://images.unsplash.com/photo-1576671081837-49000212a370?w=900&q=80&auto=format&fit=crop');"></div>
+        <div class="process-visual-overlay"></div>
+        <div class="process-visual-badge">
+          <div class="process-badge-icon" style="background:var(--navy-pale);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <div>
+            <div class="process-badge-title">Résultats instantanés</div>
+            <div class="process-badge-sub">Moins de 0.5 seconde</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Étape 2 -->
+    <div class="process-step reverse afu d2">
+      <div class="process-step-num">02</div>
+      <div class="process-content">
+        <div class="process-eyebrow" style="color:var(--green);">
+          <div style="width:24px;height:24px;background:var(--green-pale);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          Étape 2 — Localisation
+        </div>
+        <h3 class="process-step-title">Localisez la<br />pharmacie <em>la plus proche</em></h3>
+        <p class="process-step-desc">
+          Notre carte interactive affiche en temps réel toutes les pharmacies partenaires ayant votre médicament en stock. Visualisez distances, horaires et prix avant de vous déplacer.
+        </p>
+        <div class="process-features">
+          <div class="process-feature">
+            <div class="process-feature-dot" style="background:var(--green-pale);">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            Carte géolocalisée avec itinéraire intégré
+          </div>
+          <div class="process-feature">
+            <div class="process-feature-dot" style="background:var(--green-pale);">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            Comparaison de prix entre les pharmacies
+          </div>
+          <div class="process-feature">
+            <div class="process-feature-dot" style="background:var(--green-pale);">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            Horaires d'ouverture et statut en direct
+          </div>
+        </div>
+        <div style="margin-top:28px;">
+          <a href="{% url 'pharmacies:pharmacy_list' %}" class="btn btn-green">Voir les pharmacies →</a>
+        </div>
+      </div>
+      <div class="process-visual">
+        <div class="process-photo" style="background-image:url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=900&q=80&auto=format&fit=crop');"></div>
+        <div class="process-visual-overlay"></div>
+        <div class="process-visual-badge">
+          <div class="process-badge-icon" style="background:var(--green-pale);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div>
+            <div class="process-badge-title">Stock mis à jour</div>
+            <div class="process-badge-sub">En temps réel</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Étape 3 -->
+    <div class="process-step afu d3">
+      <div class="process-step-num">03</div>
+      <div class="process-content">
+        <div class="process-eyebrow" style="color:var(--gold);">
+          <div style="width:24px;height:24px;background:var(--gold-pale);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          Étape 3 — Réservation &amp; Paiement
+        </div>
+        <h3 class="process-step-title">Réservez et<br /><em>payez en un clic</em></h3>
+        <p class="process-step-desc">
+          Bloquez votre médicament directement depuis l'application. Réglez via Airtel Money, Mobicash ou carte bancaire. Présentez votre code de confirmation en pharmacie.
+        </p>
+        <div class="process-features">
+          <div class="process-feature">
+            <div class="process-feature-dot" style="background:var(--gold-pale);">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            Paiement mobile money (Airtel, Moov, Mobicash)
+          </div>
+          <div class="process-feature">
+            <div class="process-feature-dot" style="background:var(--gold-pale);">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            Code QR de retrait, sans file d'attente
+          </div>
+          <div class="process-feature">
+            <div class="process-feature-dot" style="background:var(--gold-pale);">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            Historique de commandes et ordonnances sauvegardés
+          </div>
+        </div>
+        <div style="margin-top:28px;">
+          <a href="{% url 'auth_user:register' %}" class="btn btn-primary">Créer un compte gratuit →</a>
+        </div>
+      </div>
+      <div class="process-visual">
+        <div class="process-photo" style="background-image:url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=900&q=80&auto=format&fit=crop');"></div>
+        <div class="process-visual-overlay"></div>
+        <div class="process-visual-badge">
+          <div class="process-badge-icon" style="background:var(--gold-pale);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <div class="process-badge-title">Transaction sécurisée</div>
+            <div class="process-badge-sub">Cryptage SSL</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     FONCTIONNALITÉS CLÉS
+════════════════════════════════════════ -->
+<section class="features-section">
+  <div class="container">
+    <div class="section-eyebrow"><span class="section-eyebrow-bar"></span>Fonctionnalités</div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+      <h2 class="section-h2">Tout ce dont vous<br /><em>avez besoin</em></h2>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card afu d1">
+        <div class="feature-card-icon" style="background:var(--navy-pale);">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="feature-card-title">Pharmacies certifiées</div>
+        <div class="feature-card-desc">Chaque pharmacie partenaire est validée par notre équipe. Vous ne voyez que des établissements officiels, enregistrés et agréés.</div>
+      </div>
+
+      <div class="feature-card afu d2">
+        <div class="feature-card-icon" style="background:var(--green-pale);">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.7"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="feature-card-title">Stock en temps réel</div>
+        <div class="feature-card-desc">Les pharmaciens mettent à jour directement leur inventaire depuis leur tableau de bord. L'information que vous voyez reflète la réalité.</div>
+      </div>
+
+      <div class="feature-card afu d3">
+        <div class="feature-card-icon" style="background:var(--gold-pale);">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.7"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <div class="feature-card-title">Mobile Money intégré</div>
+        <div class="feature-card-desc">Payez avec Airtel Money, Moov Money ou Mobicash. Pas de carte bancaire nécessaire — pensé pour l'Afrique centrale.</div>
+      </div>
+
+      <div class="feature-card afu d1">
+        <div class="feature-card-icon" style="background:var(--green-pale);">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.7"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="feature-card-title">Géolocalisation précise</div>
+        <div class="feature-card-desc">Trouvez la pharmacie la plus proche avec la distance exacte et l'itinéraire. La carte fonctionne sans compte utilisateur.</div>
+      </div>
+
+      <div class="feature-card afu d2">
+        <div class="feature-card-icon" style="background:var(--navy-pale);">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.7"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="feature-card-title">Disponible 24h/24</div>
+        <div class="feature-card-desc">PharMap fonctionne à toute heure. Consultez les stocks et réservez même la nuit pour récupérer dès l'ouverture de la pharmacie.</div>
+      </div>
+
+      <div class="feature-card afu d3">
+        <div class="feature-card-icon" style="background:var(--sand-2);">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="1.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div class="feature-card-title">Gestion d'ordonnances</div>
+        <div class="feature-card-desc">Téléversez vos ordonnances une fois, retrouvez-les à chaque visite. Votre pharmacien accède aux informations de manière sécurisée.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     TÉMOIGNAGE BANDEAU
+════════════════════════════════════════ -->
+<section class="quote-band">
+  <div class="container">
+    <div class="quote-band-inner">
+      <p class="quote-band-text">
+        "PharMap a changé ma vie de patient chronique. Je ne me déplace plus pour rien — je sais exactement où trouver mon insuline avant même de sortir de chez moi."
+      </p>
+      <div class="quote-band-author">
+        <div class="quote-band-avatar">JN</div>
+        <div>
+          <div class="quote-band-name">Jean-Paul N.</div>
+          <div class="quote-band-role">Patient diabétique · Owendo, Libreville</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     POUR LES PHARMACIES
+════════════════════════════════════════ -->
+<section class="pharmacy-cta-section">
+  <div class="container">
+    <div class="pharmacy-cta-inner">
+      <div class="pharmacy-cta-photo-wrap">
+        <div class="pharmacy-cta-photo"></div>
+        <div class="pharmacy-cta-photo-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2"><path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/><path d="M3 9l2-5h14l2 5"/><line x1="12" y1="9" x2="12" y2="20"/><line x1="3" y1="14" x2="21" y2="14"/></svg>
+          Espace pharmacies partenaires
+        </div>
+      </div>
+      <div>
+        <div class="pharmacy-cta-eyebrow">Vous êtes pharmacien ?</div>
+        <h2 class="pharmacy-cta-title">Rejoignez notre réseau de<br /><em>pharmacies partenaires</em></h2>
+        <p class="pharmacy-cta-desc">Augmentez votre visibilité, gérez votre stock en ligne et recevez des réservations directes. Plus de 120 pharmacies nous font déjà confiance.</p>
+        <div class="pharmacy-benefits">
+          <div class="pharmacy-benefit">
+            <div class="pharmacy-benefit-icon" style="background:var(--navy-pale);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+              <div class="pharmacy-benefit-title">Visibilité accrue</div>
+              <div class="pharmacy-benefit-desc">Soyez trouvé par des milliers de patients qui cherchent vos médicaments chaque jour.</div>
+            </div>
+          </div>
+          <div class="pharmacy-benefit">
+            <div class="pharmacy-benefit-icon" style="background:var(--green-pale);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <div>
+              <div class="pharmacy-benefit-title">Tableau de bord complet</div>
+              <div class="pharmacy-benefit-desc">Gérez votre inventaire, traitez les commandes et analysez vos ventes depuis une interface intuitive.</div>
+            </div>
+          </div>
+          <div class="pharmacy-benefit">
+            <div class="pharmacy-benefit-icon" style="background:var(--gold-pale);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div>
+              <div class="pharmacy-benefit-title">Paiements simplifiés</div>
+              <div class="pharmacy-benefit-desc">Recevez vos paiements directement sur votre compte mobile money ou bancaire, sans intermédiaire.</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <a href="#" class="btn btn-primary btn-lg">Rejoindre le réseau →</a>
+          <a href="#" class="btn btn-outline btn-lg">Nous contacter</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     FAQ
+════════════════════════════════════════ -->
+<section class="faq-section">
+  <div class="container">
+    <div style="text-align:center; max-width:560px; margin:0 auto;">
+      <div class="section-eyebrow" style="justify-content:center;"><span class="section-eyebrow-bar"></span>Questions fréquentes</div>
+      <h2 class="section-h2">Tout ce que vous<br /><em>voulez savoir</em></h2>
+    </div>
+
+    <div class="faq-grid">
+      <details class="faq-item">
+        <summary class="faq-question">
+          PharMap est-il gratuit pour les patients ?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <p class="faq-answer">Oui, PharMap est entièrement gratuit pour les patients. Créer un compte, rechercher des médicaments, consulter les stocks et localiser les pharmacies ne coûte rien. Vous payez uniquement le prix du médicament en pharmacie.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">
+          Les prix affichés sont-ils les prix réels ?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <p class="faq-answer">Les prix sont renseignés directement par les pharmaciens partenaires et mis à jour régulièrement. En cas de promotion ou de variation de prix, la pharmacie s'engage à honorer le prix affiché au moment de la réservation.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">
+          Puis-je annuler une réservation ?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <p class="faq-answer">Oui, vous pouvez annuler votre réservation jusqu'à 30 minutes avant la collecte prévue depuis votre espace "Mes commandes". En cas de paiement en avance, le remboursement est effectué sous 24 à 48 heures.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">
+          L'application fonctionne-t-elle hors connexion ?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <p class="faq-answer">PharMap est une Progressive Web App (PWA) qui met en cache certaines données. Votre historique de commandes et les informations des pharmacies récemment consultées restent accessibles hors connexion. La recherche en temps réel nécessite une connexion.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">
+          Comment devenir pharmacie partenaire ?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <p class="faq-answer">Remplissez le formulaire de demande partenariat. Notre équipe vérifie votre autorisation d'exercice et vous contacte sous 48h. L'intégration complète prend entre 3 et 5 jours ouvrables.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">
+          PharMap est-il disponible dans toutes les villes du Gabon ?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <p class="faq-answer">Actuellement, PharMap couvre Libreville, Owendo, Akanda et Port-Gentil. Nous développons activement notre réseau vers Franceville, Oyem et les autres villes du Gabon. Inscrivez-vous pour être notifié du lancement dans votre ville.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     CTA FINAL
+════════════════════════════════════════ -->
+<section class="hiw-cta">
+  <div class="container">
+    <div class="hiw-cta-inner afu">
+      <div class="section-eyebrow" style="justify-content:center;"><span class="section-eyebrow-bar"></span>Commencer maintenant</div>
+      <h2 class="hiw-cta-title">Prêt à trouver vos<br />médicaments <em>en quelques secondes</em> ?</h2>
+      <p class="hiw-cta-desc">
+        Rejoignez les milliers de Gabonais qui utilisent PharMap pour gérer leur santé simplement. Inscription gratuite, sans engagement.
+      </p>
+      <div class="hiw-cta-actions">
+        <a href="{% url 'pharmacies:search' %}" class="btn btn-primary btn-xl">Rechercher un médicament →</a>
+        <a href="{% url 'auth_user:register' %}" class="btn btn-outline btn-xl">Créer un compte gratuit</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

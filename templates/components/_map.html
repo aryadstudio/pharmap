@@ -1,0 +1,77 @@
+<div id="{{ map_id|default:'leafletMap' }}"
+     style="height:100%;width:100%;"></div>
+
+<script>
+(function () {
+  function initMap() {
+    const mapId   = "{{ map_id|default:'leafletMap' }}";
+    const center  = {{ map_center_json|default:"[0.3924, 9.4536]"|safe }};
+    const zoom    = {{ map_zoom|default:13 }};
+    const markers = {{ map_markers_json|default:"[]"|safe }};
+
+    const mapEl = document.getElementById(mapId);
+    if (!mapEl) return;
+    if (typeof L === 'undefined') { setTimeout(initMap, 100); return; }
+
+    const map = L.map(mapId, {
+      zoomControl:     {{ map_zoom_control|default:"false" }},
+      scrollWheelZoom: false,
+      dragging:        {{ map_dragging|default:"false" }},
+    }).setView(center, zoom);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+      maxZoom: 19,
+    }).addTo(map);
+
+    function mkIcon(color) {
+      color = color || '#0C1F3F';
+      return L.divIcon({
+        html: '<div style="background:' + color + ';border:2px solid white;border-radius:50%;'
+            + 'width:28px;height:28px;display:flex;align-items:center;justify-content:center;'
+            + 'box-shadow:0 2px 10px rgba(12,31,63,0.4);">'
+            + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none">'
+            + '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13'
+            + 'c0-3.87-3.13-7-7-7z" fill="white"/>'
+            + '<circle cx="12" cy="9" r="2.5" fill="' + color + '"/>'
+            + '</svg></div>',
+        iconSize:    [28, 28],
+        iconAnchor:  [14, 28],
+        popupAnchor: [0, -30],
+        className:   '',
+      });
+    }
+
+    const bounds = [];
+    markers.forEach(function (m) {
+      L.marker([m.lat, m.lng], { icon: mkIcon(m.color) })
+        .addTo(map)
+        .bindPopup('<strong>' + m.name + '</strong>', { maxWidth: 220 });
+      bounds.push([m.lat, m.lng]);
+    });
+
+    /* Ajustement zoom si plusieurs marqueurs */
+    if (bounds.length === 1) {
+      map.setView(bounds[0], zoom);
+    } else if (bounds.length > 1) {
+      const lb = L.latLngBounds(bounds);
+      if (lb.isValid()) {
+        map.fitBounds(lb, { padding: [40, 40], maxZoom: 14 });
+      }
+    }
+
+    /* invalidateSize — indispensable quand le conteneur n'est pas
+       encore rendu à sa taille finale au moment de l'init          */
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { map.invalidateSize(); });
+    });
+    setTimeout(function () { map.invalidateSize(); }, 400);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMap);
+  } else {
+    initMap();
+  }
+})();
+</script>

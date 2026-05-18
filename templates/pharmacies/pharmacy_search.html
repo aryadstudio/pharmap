@@ -1,0 +1,1262 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Recherche{% if query %} · {{ query }}{% endif %} — PharMap{% endblock %}
+
+{% block extra_css %}
+<style>
+.sr-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+}
+
+/* ── TOPBAR ── */
+.sr-topbar {
+  background: white;
+  border-bottom: 1px solid var(--line);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  z-index: 700;
+  box-shadow: var(--sh-1);
+}
+.sr-search-wrap {
+  flex: 1;
+  position: relative;
+  max-width: 560px;
+}
+.sr-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--sand);
+  border: 1.5px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 11px 14px;
+  transition: var(--t);
+  margin: 0;
+}
+.sr-field:focus-within {
+  border-color: var(--navy);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(12,31,63,0.08);
+}
+.sr-field input {
+  border: none; outline: none; width: 100%;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.92rem; color: var(--ink);
+}
+.sr-field input::placeholder { color: var(--ink-5); }
+.sr-clear {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-4); padding: 2px;
+  display: flex; align-items: center;
+  transition: var(--t);
+}
+.sr-clear:hover { color: var(--ink); }
+
+/* ── AUTOCOMPLETE ── */
+.sr-autocomplete {
+  position: absolute;
+  top: calc(100% + 6px); left: 0; right: 0;
+  background: white;
+  border-radius: var(--r);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--sh-3);
+  z-index: 9999;
+  overflow: hidden;
+}
+.ac-group-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--ink-5); padding: 10px 14px 4px;
+}
+.ac-item {
+  display: flex; align-items: center;
+  gap: 10px; padding: 10px 14px;
+  cursor: pointer; transition: var(--t);
+}
+.ac-item:hover, .ac-item.ac-active { background: var(--navy-pale); }
+.ac-item-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--sand-2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ac-item-name { font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--ink); }
+.ac-item-sub  { font-size: 0.7rem; color: var(--ink-4); margin-top: 1px; }
+.ac-item-badge { margin-left: auto; flex-shrink: 0; }
+.ac-divider { height: 1px; background: var(--line); margin: 4px 0; }
+
+/* ── GEO BTN ── */
+.sr-geo-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 10px 16px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--line-2);
+  background: white; color: var(--ink-3);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; transition: var(--t);
+  white-space: nowrap;
+}
+.sr-geo-btn:hover  { border-color: var(--navy); color: var(--navy); background: var(--navy-pale); }
+.sr-geo-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+.sr-geo-btn.loading { opacity: 0.7; pointer-events: none; }
+.geo-pulse {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #22A07C;
+  animation: pdot 2s ease-in-out infinite;
+  display: none;
+}
+.sr-geo-btn.active .geo-pulse { display: block; }
+@keyframes pdot {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.55; transform:scale(.78); }
+}
+
+/* ── RADIUS ── */
+.sr-radius-wrap {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  background: var(--navy-pale);
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--navy-tint);
+  white-space: nowrap;
+}
+.sr-radius-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 700; color: var(--navy);
+  min-width: 42px; text-align: right;
+}
+.sr-radius-slider {
+  -webkit-appearance: none;
+  width: 110px; height: 4px;
+  border-radius: 2px;
+  background: var(--navy-tint);
+  outline: none; cursor: pointer;
+}
+.sr-radius-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--navy);
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(12,31,63,0.3);
+  cursor: grab;
+}
+.sr-radius-slider::-webkit-slider-thumb:active { cursor: grabbing; }
+
+/* ── CATÉGORIES ── */
+.sr-cats {
+  background: white;
+  border-bottom: 1px solid var(--line);
+  padding: 0 24px;
+  display: flex; align-items: center;
+  gap: 6px; overflow-x: auto;
+  scrollbar-width: none; flex-shrink: 0;
+}
+.sr-cats::-webkit-scrollbar { display: none; }
+.sr-cat-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--ink-3); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  border-top: none; border-left: none; border-right: none;
+  background: none;
+  transition: var(--t); white-space: nowrap;
+}
+.sr-cat-pill:hover  { color: var(--navy); border-bottom-color: var(--navy-tint); }
+.sr-cat-pill.active { color: var(--navy); border-bottom-color: var(--navy); font-weight: 700; }
+
+/* ── SPLIT ── */
+.sr-split {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  grid-template-rows: 1fr;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.sr-map-pane {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+}
+#searchMap {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+  position: absolute;
+  inset: 0;
+}
+.leaflet-container { height: 100% !important; width: 100% !important; }
+.leaflet-popup { z-index: 9000 !important; }
+.leaflet-popup-content-wrapper {
+  border-radius: var(--r) !important;
+  box-shadow: var(--sh-3) !important;
+  border: 1px solid var(--line) !important;
+  padding: 0 !important; overflow: hidden;
+}
+.leaflet-popup-content { margin: 0 !important; }
+.leaflet-popup-tip     { display: none; }
+
+.map-price-badge {
+  background: white;
+  border: 2px solid var(--navy);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 700; color: var(--navy);
+  white-space: nowrap;
+  box-shadow: 0 2px 12px rgba(12,31,63,0.2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.map-price-badge::after {
+  content: '';
+  position: absolute; bottom: -7px; left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--navy);
+}
+.map-price-badge.highlighted { background: var(--navy); color: white; transform: scale(1.1); }
+.map-verified-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: var(--green); border-radius: 50%;
+  margin-left: 3px; vertical-align: middle;
+}
+.map-recenter-btn {
+  position: absolute; bottom: 24px; left: 16px; z-index: 500;
+  background: white; border: none;
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem; font-weight: 600; color: var(--navy);
+  cursor: pointer; box-shadow: var(--sh-2);
+  display: flex; align-items: center; gap: 6px;
+  transition: var(--t);
+}
+.map-recenter-btn:hover { box-shadow: var(--sh-3); }
+
+.map-popup { min-width: 220px; padding: 16px; font-family: 'Syne', sans-serif; }
+.map-popup-name  { font-size: .88rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.map-popup-meta  { font-size: .72rem; color: var(--ink-4); margin-bottom: 12px; line-height: 1.5; }
+.map-popup-price { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+.map-popup-price span { font-family: 'Inter', sans-serif; font-size: .7rem; color: var(--ink-4); font-weight: 400; }
+.map-popup-btn {
+  display: block; width: 100%;
+  background: var(--navy); color: white;
+  padding: 8px 12px; border-radius: var(--r-xs);
+  font-size: .75rem; font-weight: 700;
+  text-decoration: none; text-align: center; transition: var(--t);
+}
+.map-popup-btn:hover { background: var(--green); }
+
+/* ── LISTE ── */
+.sr-results-pane {
+  border-left: 1px solid var(--line);
+  background: var(--sand);
+  display: flex; flex-direction: column;
+  overflow: hidden; min-height: 0;
+}
+.sr-results-header {
+  background: white;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; flex-shrink: 0;
+}
+.sr-results-count { font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--ink); }
+.sr-results-count span { color: var(--green); }
+.sr-sort-select {
+  padding: 6px 10px; border-radius: var(--r-xs);
+  border: 1.5px solid var(--line-2);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem; font-weight: 600; color: var(--ink-2);
+  background: var(--sand); outline: none; cursor: pointer; transition: var(--t);
+}
+.sr-sort-select:focus { border-color: var(--navy); }
+.sr-results-scroll {
+  flex: 1; overflow-y: auto;
+  padding: 16px; display: flex;
+  flex-direction: column; gap: 10px;
+  min-height: 0;
+}
+.sr-results-scroll::-webkit-scrollbar { width: 4px; }
+.sr-results-scroll::-webkit-scrollbar-thumb { background: var(--sand-3); border-radius: 2px; }
+
+/* ── MED STRIP ── */
+.sr-med-strip {
+  display: flex; gap: 10px;
+  overflow-x: auto; padding-bottom: 4px;
+  scrollbar-width: none; margin-bottom: 4px;
+}
+.sr-med-strip::-webkit-scrollbar { display: none; }
+.sr-med-chip {
+  flex: 0 0 auto; min-width: 160px;
+  background: white; border-radius: var(--r);
+  border: 1px solid var(--line); padding: 11px 14px;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; text-decoration: none; transition: var(--t);
+}
+.sr-med-chip:hover { border-color: var(--navy-tint); box-shadow: var(--sh-1); }
+.sr-med-chip-name { font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.sr-med-chip-sub  { font-size: 0.68rem; color: var(--ink-4); }
+
+/* ── CARD PHARMACIE ── */
+.sr-pha-card {
+  background: white; border-radius: var(--r);
+  border: 1px solid var(--line); padding: 16px;
+  text-decoration: none; display: block;
+  transition: var(--t); position: relative;
+}
+.sr-pha-card:hover { box-shadow: var(--sh-2); border-color: var(--navy-tint); transform: translateX(3px); }
+.sr-pha-card.highlighted { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(12,31,63,0.1); }
+.sr-pha-card-top { display: flex; align-items: flex-start; gap: 13px; margin-bottom: 12px; }
+.sr-pha-card-logo {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: var(--navy-pale); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.sr-pha-card-name { font-family: 'Fraunces', serif; font-size: 0.95rem; font-weight: 400; color: var(--ink); margin-bottom: 3px; }
+.sr-pha-card-addr { font-size: 0.72rem; color: var(--ink-4); display: flex; align-items: center; gap: 4px; }
+.sr-pha-card-badges { margin-left: auto; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.sr-pha-card-bottom {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding-top: 11px; border-top: 1px solid var(--line);
+}
+.sr-pha-distance { display: flex; align-items: center; gap: 5px; font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--ink-3); }
+.sr-pha-price     { font-family: 'Fraunces', serif; font-size: 1.05rem; font-weight: 700; color: var(--navy); }
+.sr-pha-price-lbl { font-family: 'Inter', sans-serif; font-size: 0.65rem; color: var(--ink-4); font-weight: 400; }
+.sr-pha-card-actions { display: flex; gap: 6px; }
+
+/* ── SKELETONS ── */
+.sr-skeleton-card { background: white; border-radius: var(--r); border: 1px solid var(--line); padding: 16px; }
+.sk { border-radius: var(--r-xs); }
+.sk-line    { height: 12px; margin-bottom: 8px; }
+.sk-line-sm { height: 9px;  margin-bottom: 6px; }
+
+/* ── ÉTAT VIDE ── */
+.sr-empty-state { text-align: center; padding: 52px 24px; }
+.sr-empty-icon {
+  width: 68px; height: 68px; border-radius: 50%;
+  background: var(--sand-2);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+.sr-empty-title { font-family: 'Fraunces', serif; font-size: 1.2rem; color: var(--ink); margin-bottom: 8px; font-weight: 400; }
+.sr-empty-desc  { font-size: 0.82rem; color: var(--ink-4); line-height: 1.7; max-width: 280px; margin: 0 auto 20px; }
+
+/* ── ÉTAT INITIAL ── */
+.sr-initial-state { padding: 24px 0; }
+.sr-initial-title { font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--ink-4); margin-bottom: 10px; }
+.sr-pop-grid      { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sr-pop-item {
+  background: white; border-radius: var(--r-sm);
+  border: 1px solid var(--line); padding: 11px 13px;
+  display: flex; align-items: center; gap: 9px;
+  text-decoration: none; cursor: pointer; transition: var(--t);
+  font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 600; color: var(--ink);
+}
+.sr-pop-item:hover { background: var(--navy-pale); border-color: var(--navy-tint); color: var(--navy); }
+.sr-pop-item-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .sr-split          { grid-template-columns: 1fr; grid-template-rows: 42vh 1fr; }
+  .sr-map-pane       { height: 42vh; position: relative; }
+  .sr-results-pane   { border-left: none; border-top: 1px solid var(--line); }
+  .sr-radius-wrap    { display: none; }
+}
+@media (max-width: 600px) {
+  .sr-topbar         { padding: 10px 14px; gap: 8px; }
+  .sr-topbar .sr-geo-btn span { display: none; }
+  .sr-cats           { padding: 0 14px; }
+  .sr-results-scroll { padding: 12px; }
+  .sr-pop-grid       { grid-template-columns: 1fr; }
+  .sr-pha-card-actions { display: none; }
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="sr-page">
+
+  <!-- ══ TOPBAR ══ -->
+  <div class="sr-topbar">
+    <div class="sr-search-wrap">
+      <!-- FIX : <form> pour capturer Entrée clavier + submit mobile -->
+      <form id="srField" class="sr-field" onsubmit="return false;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="searchInput"
+               value="{{ query }}"
+               placeholder="Médicament, principe actif, marque…"
+               autocomplete="off" spellcheck="false" />
+        <button type="button" class="sr-clear" id="clearBtn"
+                {% if not query %}style="display:none;"{% endif %}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </form>
+      <div class="sr-autocomplete" id="autocomplete" hidden></div>
+    </div>
+
+    <button class="sr-geo-btn {% if has_location %}active{% endif %}" id="geoBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+        <circle cx="12" cy="12" r="8" stroke-dasharray="3 2"/>
+      </svg>
+      <span id="geoBtnLabel">{% if has_location %}Position active{% else %}Ma position{% endif %}</span>
+      <div class="geo-pulse"></div>
+    </button>
+
+    <div class="sr-radius-wrap" id="radiusWrap" {% if not has_location %}hidden{% endif %}>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+      </svg>
+      <input type="range" class="sr-radius-slider" id="radiusSlider"
+             min="1" max="50" value="{{ radius }}" />
+      <span class="sr-radius-label" id="radiusLabel">{{ radius }} km</span>
+    </div>
+  </div>
+
+  <!-- ══ CATÉGORIES ══ -->
+  <div class="sr-cats" id="catsBar">
+    <button class="sr-cat-pill {% if not category %}active{% endif %}" data-slug="">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+      </svg>
+      Tous
+    </button>
+    {% for cat in categories %}
+      <button class="sr-cat-pill {% if category == cat.slug %}active{% endif %}"
+              data-slug="{{ cat.slug }}">{{ cat.name }}</button>
+    {% empty %}
+      {% for slug, label in default_categories %}
+        <button class="sr-cat-pill {% if category == slug %}active{% endif %}"
+                data-slug="{{ slug }}">{{ label }}</button>
+      {% endfor %}
+    {% endfor %}
+  </div>
+
+  <!-- ══ SPLIT ══ -->
+  <div class="sr-split">
+
+    <!-- CARTE -->
+    <div class="sr-map-pane">
+      <div id="searchMap"></div>
+      <button class="map-recenter-btn" id="recenterBtn"
+              {% if not has_location %}style="display:none;"{% endif %}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+        </svg>
+        Recentrer
+      </button>
+    </div>
+
+    <!-- LISTE -->
+    <div class="sr-results-pane">
+      <div class="sr-results-header">
+        <div class="sr-results-count" id="resultCount">
+          {% if pharmacies %}
+            <span>{{ pharmacies|length }}</span>
+            pharmacie{% if pharmacies|length != 1 %}s{% endif %}
+            trouvée{% if pharmacies|length != 1 %}s{% endif %}
+          {% else %}
+            Aucun résultat
+          {% endif %}
+        </div>
+        <select class="sr-sort-select" id="sortSelect">
+          <option value="distance">Plus proche</option>
+          <option value="price">Prix croissant</option>
+          <option value="rating">Mieux notées</option>
+        </select>
+      </div>
+
+      <div class="sr-results-scroll" id="resultsScroll">
+        <div id="medStrip"></div>
+        <div id="pharmacyList">
+          <div class="sr-skeleton-card">
+            <div style="display:flex;gap:12px;margin-bottom:12px;">
+              <div class="skeleton sk" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div class="skeleton sk sk-line" style="width:70%;"></div>
+                <div class="skeleton sk sk-line-sm" style="width:50%;"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <div class="skeleton sk sk-line-sm" style="width:30%;"></div>
+              <div class="skeleton sk sk-line-sm" style="width:25%;"></div>
+            </div>
+          </div>
+          <div class="sr-skeleton-card">
+            <div style="display:flex;gap:12px;margin-bottom:12px;">
+              <div class="skeleton sk" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div class="skeleton sk sk-line" style="width:60%;"></div>
+                <div class="skeleton sk sk-line-sm" style="width:40%;"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <div class="skeleton sk sk-line-sm" style="width:25%;"></div>
+              <div class="skeleton sk sk-line-sm" style="width:20%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ DONNÉES DJANGO → JS ══
+     Tout sérialisé proprement côté Python (json.dumps + DjangoJSONEncoder)
+     → zéro risque de JSON invalide (None, Decimal, virgules locales…)     -->
+<script id="django-data" type="application/json">
+{
+  "query":            "{{ query|escapejs }}",
+  "category":         "{{ category|escapejs }}",
+  "has_location":     {% if has_location %}true{% else %}false{% endif %},
+  "user_lat":         {% if has_location and user_lat %}{{ user_lat }}{% else %}null{% endif %},
+  "user_lng":         {% if has_location and user_lng %}{{ user_lng }}{% else %}null{% endif %},
+  "radius":           {{ radius|default:5 }},
+  "search_url":       "{% url 'pharmacies:search' %}",
+  "autocomplete_url": "{% url 'pharmacies:autocomplete' %}",
+  "pharmacies":       {{ pharmacies_json|safe }},
+  "medications":      {{ medications_json|safe }}
+}
+</script>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  /* ════════════════════════════════════
+     1. LECTURE DES DONNÉES DJANGO
+  ════════════════════════════════════ */
+  let DJANGO;
+  try {
+    DJANGO = JSON.parse(document.getElementById('django-data').textContent);
+  } catch (e) {
+    console.error('PharMap — JSON django-data invalide :', e);
+    document.getElementById('pharmacyList').innerHTML =
+      '<div class="sr-empty-state">'
+      + '<div class="sr-empty-title">Erreur de chargement</div>'
+      + '<p class="sr-empty-desc">Données invalides reçues du serveur. Rechargez la page.</p>'
+      + '</div>';
+    return;
+  }
+
+  const STATE = {
+    query:       DJANGO.query,
+    category:    DJANGO.category,
+    lat:         DJANGO.user_lat,
+    lng:         DJANGO.user_lng,
+    radius:      DJANGO.radius,
+    sort:        'distance',
+    pharmacies:  DJANGO.pharmacies,
+    medications: DJANGO.medications,
+    total:       DJANGO.pharmacies.length,
+    activeCard:  null,
+  };
+
+  const SEARCH_URL       = DJANGO.search_url;
+  const AUTOCOMPLETE_URL = DJANGO.autocomplete_url;
+
+  /* ════════════════════════════════════
+     2. CARTE LEAFLET
+  ════════════════════════════════════ */
+  let map, markersLayer, userMarker, radiusCircle;
+
+  function initMap() {
+    const center = STATE.lat ? [STATE.lat, STATE.lng] : [0.3924, 9.4536];
+    const zoom   = STATE.lat ? 13 : 12;
+
+    map = L.map('searchMap', {
+      zoomControl:     true,
+      scrollWheelZoom: true,
+    }).setView(center, zoom);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap © CartoDB',
+      maxZoom: 19,
+    }).addTo(map);
+
+    markersLayer = L.layerGroup().addTo(map);
+
+    if (STATE.lat) {
+      placeUserMarker(STATE.lat, STATE.lng);
+      drawRadiusCircle(STATE.radius);
+    }
+
+    /* Double RAF + timeout — le conteneur grid peut ne pas avoir
+       sa taille finale quand Leaflet s'initialise               */
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        map.invalidateSize();
+        fitMapToBounds();
+      });
+    });
+    setTimeout(function () {
+      map.invalidateSize();
+      fitMapToBounds();
+    }, 400);
+  }
+
+  function placeUserMarker(lat, lng) {
+    if (userMarker) userMarker.remove();
+    userMarker = L.circleMarker([lat, lng], {
+      radius: 9, fillColor: '#0C1F3F', color: 'white',
+      weight: 3, fillOpacity: 1,
+    }).addTo(map).bindTooltip('Vous êtes ici');
+  }
+
+  function drawRadiusCircle(km) {
+    if (!STATE.lat) return;
+    if (radiusCircle) radiusCircle.remove();
+    radiusCircle = L.circle([STATE.lat, STATE.lng], {
+      radius: km * 1000, color: '#0C1F3F', weight: 1.5,
+      fillColor: '#0C1F3F', fillOpacity: 0.05, dashArray: '6 4',
+    }).addTo(map);
+  }
+
+  function renderMarkers(pharmacies) {
+    markersLayer.clearLayers();
+    pharmacies.forEach(function (p) {
+      if (!p.lat || !p.lng) return;
+      var isHL  = STATE.activeCard === p.id;
+      var label = p.min_price
+        ? Math.round(p.min_price).toLocaleString('fr-FR') + ' XAF'
+        : p.name.split(' ').slice(0, 2).join(' ');
+
+      var icon = L.divIcon({
+        html: '<div class="map-price-badge ' + (isHL ? 'highlighted' : '') + '">'
+              + label
+              + (p.is_verified ? '<span class="map-verified-dot"></span>' : '')
+              + '</div>',
+        className: '',
+        iconAnchor: [0, 28],
+      });
+
+      var marker = L.marker([p.lat, p.lng], { icon: icon }).addTo(markersLayer);
+      marker.on('click', function () {
+        highlightCard(p.id);
+        marker.bindPopup(buildPopup(p)).openPopup();
+      });
+    });
+  }
+
+  function buildPopup(p) {
+    return L.popup({ offset: [0, -8], maxWidth: 260 }).setContent(
+      '<div class="map-popup">'
+      + '<div class="map-popup-name">' + p.name + '</div>'
+      + '<div class="map-popup-meta">'
+        + p.city
+        + (p.distance !== null ? ' · ' + p.distance + ' km' : '')
+        + (p.is_open_24h ? ' · <span style="color:#1A7A5E;font-weight:700;">24h/24</span>' : '')
+      + '</div>'
+      + (p.min_price
+          ? '<div class="map-popup-price">À partir de '
+            + Math.round(p.min_price).toLocaleString('fr-FR')
+            + ' <span>XAF</span></div>'
+          : '')
+      + '<a href="' + p.url + '" class="map-popup-btn">Voir le stock →</a>'
+      + '</div>'
+    );
+  }
+
+  function recenterMap() {
+    if (STATE.lat) map.setView([STATE.lat, STATE.lng], 13);
+  }
+
+  function fitMapToBounds() {
+    if (STATE.lat && radiusCircle) {
+      map.fitBounds(radiusCircle.getBounds(), { padding: [24, 24] });
+    } else if (STATE.pharmacies.length) {
+      var valid = STATE.pharmacies.filter(function (p) { return p.lat && p.lng; });
+      if (!valid.length) return;
+      var bounds = L.latLngBounds(valid.map(function (p) { return [p.lat, p.lng]; }));
+      if (bounds.isValid()) map.fitBounds(bounds, { padding: [40, 40] });
+    }
+  }
+
+  /* ════════════════════════════════════
+     3. GÉOLOCALISATION
+  ════════════════════════════════════ */
+  function locateMe() {
+    var btn   = document.getElementById('geoBtn');
+    var label = document.getElementById('geoBtnLabel');
+
+    if (STATE.lat) {
+      STATE.lat = STATE.lng = null;
+      btn.classList.remove('active');
+      label.textContent = 'Ma position';
+      document.getElementById('radiusWrap').hidden = true;
+      document.getElementById('recenterBtn').style.display = 'none';
+      if (userMarker)   { userMarker.remove();   userMarker   = null; }
+      if (radiusCircle) { radiusCircle.remove(); radiusCircle = null; }
+      fetchResults();
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      showToast('Géolocalisation non supportée par votre navigateur.', 'error');
+      return;
+    }
+
+    btn.classList.add('loading');
+    label.textContent = '…';
+
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        STATE.lat = pos.coords.latitude;
+        STATE.lng = pos.coords.longitude;
+        btn.classList.remove('loading');
+        btn.classList.add('active');
+        label.textContent = 'Position active';
+        document.getElementById('radiusWrap').hidden = false;
+        document.getElementById('recenterBtn').style.display = 'flex';
+        placeUserMarker(STATE.lat, STATE.lng);
+        drawRadiusCircle(STATE.radius);
+        map.setView([STATE.lat, STATE.lng], 14);
+        fetchResults();
+      },
+      function (err) {
+        btn.classList.remove('loading');
+        label.textContent = 'Ma position';
+        showToast(
+          err.code === 1
+            ? 'Vous avez refusé la géolocalisation.'
+            : 'Impossible de vous localiser.',
+          'error'
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  /* ════════════════════════════════════
+     4. RAYON
+  ════════════════════════════════════ */
+  var radiusTimer;
+  function onRadiusChange(val) {
+    STATE.radius = parseInt(val);
+    document.getElementById('radiusLabel').textContent = val + ' km';
+    drawRadiusCircle(STATE.radius);
+    clearTimeout(radiusTimer);
+    /* Ne re-fetche que si on a une position active */
+    if (STATE.lat) {
+      radiusTimer = setTimeout(fetchResults, 400);
+    }
+  }
+
+  /* ════════════════════════════════════
+     5. AUTOCOMPLETE
+  ════════════════════════════════════ */
+  var acTimer;
+  var searchInput = document.getElementById('searchInput');
+
+  searchInput.addEventListener('input', function () {
+    var val = this.value.trim();
+    document.getElementById('clearBtn').style.display = val ? 'flex' : 'none';
+    STATE.query = val;
+    clearTimeout(acTimer);
+
+    /* Champ vidé → recharge sans query */
+    if (!val) { hideAC(); fetchResults(); return; }
+    if (val.length < 2) { hideAC(); return; }
+
+    acTimer = setTimeout(function () {
+      fetch(AUTOCOMPLETE_URL + '?q=' + encodeURIComponent(val), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) { renderAC(data.results); })
+        .catch(function () { hideAC(); });
+    }, 260);
+  });
+
+  searchInput.addEventListener('keydown', function (e) {
+    var items = Array.from(document.querySelectorAll('.ac-item'));
+    var idx = items.findIndex(function (el) { return el.classList.contains('ac-active'); });
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      idx = Math.min(idx + 1, items.length - 1);
+      items.forEach(function (el, i) { el.classList.toggle('ac-active', i === idx); });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      idx = Math.max(idx - 1, 0);
+      items.forEach(function (el, i) { el.classList.toggle('ac-active', i === idx); });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      var active = document.querySelector('.ac-item.ac-active');
+      if (active) {
+        selectSuggestion(active.dataset.name);
+      } else {
+        /* Pas d'AC sélectionné → lancer la recherche */
+        hideAC();
+        STATE.query = searchInput.value.trim();
+        fetchResults();
+      }
+    } else if (e.key === 'Escape') {
+      hideAC();
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.sr-search-wrap')) hideAC();
+  });
+
+  function renderAC(results) {
+    var box = document.getElementById('autocomplete');
+    if (!results || !results.length) { hideAC(); return; }
+    box.innerHTML = '<div class="ac-group-label">Médicaments</div>'
+      + results.map(function (r) {
+          return '<div class="ac-item" data-name="' + r.name.replace(/"/g, '&quot;') + '">'
+            + '<div class="ac-item-icon" style="background:var(--navy-pale);">'
+            +   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2">'
+            +   '<rect x="10" y="2" width="4" height="20" rx="2"/>'
+            +   '<rect x="2" y="10" width="20" height="4" rx="2"/></svg>'
+            + '</div>'
+            + '<div>'
+            +   '<div class="ac-item-name">' + highlight(r.name, STATE.query) + '</div>'
+            +   '<div class="ac-item-sub">' + (r.category__name || 'Médicament') + '</div>'
+            + '</div>'
+            + '<div class="ac-item-badge">'
+            +   (r.requires_prescription
+                 ? '<span class="badge badge-red" style="font-size:.6rem;">Ordo.</span>'
+                 : '<span class="badge badge-green" style="font-size:.6rem;">Sans ordo.</span>')
+            + '</div>'
+            + '</div>';
+        }).join('');
+
+    box.querySelectorAll('.ac-item').forEach(function (el) {
+      el.addEventListener('click', function () { selectSuggestion(el.dataset.name); });
+    });
+    box.hidden = false;
+  }
+
+  function highlight(text, query) {
+    if (!query) return text;
+    var re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return text.replace(re, '<mark style="background:var(--gold-pale);border-radius:2px;padding:0 1px;">$1</mark>');
+  }
+
+  function hideAC() { document.getElementById('autocomplete').hidden = true; }
+
+  function selectSuggestion(name) {
+    searchInput.value = name;
+    STATE.query = name;
+    document.getElementById('clearBtn').style.display = 'flex';
+    hideAC();
+    fetchResults();
+  }
+
+  function clearSearch() {
+    searchInput.value = '';
+    STATE.query = '';
+    document.getElementById('clearBtn').style.display = 'none';
+    hideAC();
+    searchInput.focus();
+    fetchResults();
+  }
+
+  /* ════════════════════════════════════
+     6. CATÉGORIES
+  ════════════════════════════════════ */
+  function filterCategory(slug) {
+    STATE.category = slug;
+    document.querySelectorAll('.sr-cat-pill').forEach(function (el) {
+      el.classList.toggle('active', el.dataset.slug === slug);
+    });
+    fetchResults();
+  }
+
+  /* ════════════════════════════════════
+     7. TRI
+  ════════════════════════════════════ */
+  function sortResults(val) {
+    STATE.sort = val;
+    var list = STATE.pharmacies.slice();
+    if (val === 'distance') {
+      list.sort(function (a, b) {
+        return (a.distance !== null ? a.distance : 9999) - (b.distance !== null ? b.distance : 9999);
+      });
+    } else if (val === 'price') {
+      list.sort(function (a, b) { return (a.min_price || 999999) - (b.min_price || 999999); });
+    } else if (val === 'rating') {
+      list.sort(function (a, b) { return b.rating - a.rating; });
+    }
+    renderList(list, STATE.total);
+    renderMarkers(list);
+  }
+
+  /* ════════════════════════════════════
+     8. FETCH AJAX
+  ════════════════════════════════════ */
+  var fetchController = null;
+
+  function fetchResults() {
+    if (fetchController) fetchController.abort();
+    fetchController = new AbortController();
+
+    var params = new URLSearchParams({
+      q:        STATE.query,
+      category: STATE.category,
+      radius:   STATE.radius,
+    });
+    if (STATE.lat) {
+      params.set('lat', STATE.lat);
+      params.set('lng', STATE.lng);
+    }
+
+    window.history.replaceState({}, '', '?' + params);
+    showSkeletons();
+
+    fetch(SEARCH_URL + '?' + params, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      signal:  fetchController.signal,
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        STATE.pharmacies  = data.pharmacies  || [];
+        STATE.medications = data.medications || [];
+        STATE.total       = data.total       || 0;
+        sortResults(STATE.sort);
+        renderMedStrip(STATE.medications);
+        renderMarkers(STATE.pharmacies);
+        fitMapToBounds();
+      })
+      .catch(function (err) {
+        if (err.name !== 'AbortError') showError();
+      });
+  }
+
+  /* ════════════════════════════════════
+     9. RENDU MÉDICAMENTS
+  ════════════════════════════════════ */
+  function renderMedStrip(meds) {
+    var strip = document.getElementById('medStrip');
+    if (!meds.length || !STATE.query) { strip.innerHTML = ''; return; }
+    strip.innerHTML =
+      '<div style="font-family:\'Syne\',sans-serif;font-size:.68rem;font-weight:700;'
+      + 'text-transform:uppercase;letter-spacing:1.2px;color:var(--ink-4);margin-bottom:8px;">'
+      + 'Médicaments correspondants</div>'
+      + '<div class="sr-med-strip">'
+      + meds.map(function (m) {
+          return '<a href="' + m.url + '" class="sr-med-chip">'
+            + '<div style="width:32px;height:32px;border-radius:8px;background:var(--navy-pale);'
+            + 'display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+            +   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">'
+            +   '<rect x="10" y="2" width="4" height="20" rx="2"/>'
+            +   '<rect x="2" y="10" width="20" height="4" rx="2"/></svg>'
+            + '</div>'
+            + '<div>'
+            +   '<div class="sr-med-chip-name">' + m.name + '</div>'
+            +   '<div class="sr-med-chip-sub">' + (m.category || 'Médicament') + '</div>'
+            + '</div></a>';
+        }).join('')
+      + '</div>'
+      + '<div class="ac-divider" style="margin-top:12px;"></div>';
+  }
+
+  /* ════════════════════════════════════
+     10. RENDU LISTE
+  ════════════════════════════════════ */
+  function renderList(pharmacies, total) {
+    var count = document.getElementById('resultCount');
+    var list  = document.getElementById('pharmacyList');
+    var s = total !== 1 ? 's' : '';
+    count.innerHTML = '<span>' + total + '</span> pharmacie' + s + ' trouvée' + s;
+
+    if (!pharmacies.length) { list.innerHTML = renderEmpty(); return; }
+
+    if (!STATE.query && !STATE.lat && !STATE.category) {
+      list.innerHTML = renderInitial(pharmacies);
+    } else {
+      list.innerHTML = pharmacies.map(renderCard).join('');
+    }
+  }
+
+  function renderCard(p) {
+    var distBadge = p.distance !== null
+      ? '<span class="sr-pha-distance">'
+        + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+        + '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>'
+        + '<circle cx="12" cy="10" r="3"/></svg>'
+        + p.distance + ' km</span>'
+      : '<span class="sr-pha-distance">' + p.city + '</span>';
+
+    var priceBadge = p.min_price
+      ? '<div>'
+        + '<div style="font-size:.65rem;color:var(--ink-4);font-family:\'Syne\',sans-serif;font-weight:600;margin-bottom:1px;">à partir de</div>'
+        + '<span class="sr-pha-price">' + Math.round(p.min_price).toLocaleString('fr-FR') + '</span>'
+        + ' <span class="sr-pha-price-lbl">XAF</span></div>'
+      : '';
+
+    return '<a href="' + p.url + '" class="sr-pha-card" id="card-' + p.id + '" data-id="' + p.id + '">'
+      + '<div class="sr-pha-card-top">'
+      +   '<div class="sr-pha-card-logo">'
+      +     '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.5">'
+      +     '<path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>'
+      +     '<path d="M3 9l2-5h14l2 5"/>'
+      +     '<line x1="12" y1="9" x2="12" y2="20"/>'
+      +     '<line x1="3" y1="14" x2="21" y2="14"/></svg>'
+      +   '</div>'
+      +   '<div style="flex:1;min-width:0;">'
+      +     '<div class="sr-pha-card-name">' + p.name + '</div>'
+      +     '<div class="sr-pha-card-addr">'
+      +       '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+      +       '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>'
+      +       '<circle cx="12" cy="10" r="3"/></svg>'
+      +       (p.address || p.city)
+      +     '</div>'
+      +   '</div>'
+      +   '<div class="sr-pha-card-badges">'
+      +     (p.is_verified ? '<span class="badge badge-green" style="font-size:.6rem;padding:2px 7px;">✓ Vérifié</span>' : '')
+      +     (p.is_open_24h ? '<span class="badge badge-navy" style="font-size:.6rem;padding:2px 7px;">24h/24</span>' : '')
+      +   '</div>'
+      + '</div>'
+      + '<div class="sr-pha-card-bottom">'
+      +   '<div style="display:flex;align-items:center;gap:14px;">'
+      +     distBadge
+      +     '<div style="display:flex;align-items:center;gap:3px;font-size:.75rem;color:var(--gold);">'
+      +       '★ <span style="color:var(--ink-3);font-weight:600;">' + parseFloat(p.rating || 0).toFixed(1) + '</span>'
+      +     '</div>'
+      +   '</div>'
+      +   '<div style="display:flex;align-items:center;gap:10px;">'
+      +     priceBadge
+      +     '<div class="sr-pha-card-actions">'
+      +       '<button class="btn btn-outline btn-sm" data-phone="' + (p.phone || '') + '">'
+      +         '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+      +         '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07'
+      +         'A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.58 3.44 2 2 0 0 1 3.54 2h3'
+      +         'a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.4'
+      +         'a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45'
+      +         'c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+      +       '</button>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>'
+      + '</a>';
+  }
+
+  function renderEmpty() {
+    return '<div class="sr-empty-state">'
+      + '<div class="sr-empty-icon">'
+      +   '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="1.5">'
+      +   '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
+      + '</div>'
+      + '<div class="sr-empty-title">Aucun résultat</div>'
+      + '<p class="sr-empty-desc">'
+      +   (STATE.query
+          ? 'Aucune pharmacie ne propose <strong>' + STATE.query + '</strong>'
+          : 'Aucune pharmacie dans cette zone')
+      +   (STATE.lat ? ' dans un rayon de ' + STATE.radius + ' km.' : '.')
+      + '</p>'
+      + (!STATE.lat && STATE.query
+          ? '<button class="btn btn-outline btn-sm" id="btnLocateEmpty">Activer ma position</button>' : '')
+      + (STATE.lat
+          ? '<button class="btn btn-outline btn-sm" id="btnExpandRadius">Élargir à '
+            + Math.min(STATE.radius + 10, 50) + ' km</button>' : '')
+      + '</div>';
+  }
+
+  function renderInitial(pharmacies) {
+    var popular = [
+      { name: 'Paracétamol',  sub: 'Antalgique · 500mg',        color: 'var(--green-pale)', stroke: 'var(--green)' },
+      { name: 'Amoxicilline', sub: 'Antibiotique · 500mg',       color: '#FEF2F2',           stroke: '#C53030'     },
+      { name: 'Artémether',   sub: 'Antipaludéen · 80mg',        color: 'var(--gold-pale)',  stroke: 'var(--gold)' },
+      { name: 'Ibuprofène',   sub: 'Anti-inflammatoire · 400mg', color: '#EBF5FB',           stroke: '#2471A3'     },
+      { name: 'Metformine',   sub: 'Diabète · 850mg',            color: '#E8F8FB',           stroke: '#117A8B'     },
+      { name: 'Oméprazole',   sub: 'Gastro · 20mg',              color: '#F5EEF8',           stroke: '#6C3483'     },
+    ];
+    return '<div class="sr-initial-state">'
+      + '<div class="sr-initial-title">Recherches populaires</div>'
+      + '<div class="sr-pop-grid">'
+      + popular.map(function (p) {
+          return '<button class="sr-pop-item" data-name="' + p.name + '">'
+            + '<div class="sr-pop-item-icon" style="background:' + p.color + ';">'
+            +   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="' + p.stroke + '" stroke-width="2">'
+            +   '<rect x="10" y="2" width="4" height="20" rx="2"/>'
+            +   '<rect x="2" y="10" width="20" height="4" rx="2"/></svg>'
+            + '</div>'
+            + '<div><div>' + p.name + '</div>'
+            +   '<div style="font-size:.68rem;color:var(--ink-4);font-weight:400;margin-top:1px;">' + p.sub + '</div>'
+            + '</div></button>';
+        }).join('')
+      + '</div>'
+      + '<div class="ac-divider" style="margin:20px 0;"></div>'
+      + '<div class="sr-initial-title">Toutes les pharmacies</div>'
+      + '<div style="display:flex;flex-direction:column;gap:8px;">'
+      + pharmacies.slice(0, 5).map(renderCard).join('')
+      + '</div></div>';
+  }
+
+  /* ════════════════════════════════════
+     11. SKELETONS + ERREUR
+  ════════════════════════════════════ */
+  function showSkeletons() {
+    document.getElementById('pharmacyList').innerHTML = [1, 2, 3].map(function () {
+      return '<div class="sr-skeleton-card">'
+        + '<div style="display:flex;gap:12px;margin-bottom:12px;">'
+        +   '<div class="skeleton sk" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;"></div>'
+        +   '<div style="flex:1;">'
+        +     '<div class="skeleton sk sk-line" style="width:65%;"></div>'
+        +     '<div class="skeleton sk sk-line-sm" style="width:45%;"></div>'
+        +   '</div></div>'
+        + '<div style="display:flex;gap:8px;">'
+        +   '<div class="skeleton sk sk-line-sm" style="width:28%;"></div>'
+        +   '<div class="skeleton sk sk-line-sm" style="width:22%;"></div>'
+        + '</div></div>';
+    }).join('');
+  }
+
+  function showError() {
+    document.getElementById('pharmacyList').innerHTML =
+      '<div class="sr-empty-state">'
+      + '<div class="sr-empty-title">Erreur de connexion</div>'
+      + '<p class="sr-empty-desc">Impossible de charger les résultats. Vérifiez votre connexion et réessayez.</p>'
+      + '<button class="btn btn-primary btn-sm" id="btnRetry">Réessayer</button>'
+      + '</div>';
+    var btn = document.getElementById('btnRetry');
+    if (btn) btn.addEventListener('click', fetchResults);
+  }
+
+  /* ════════════════════════════════════
+     12. SYNC CARTE ↔ LISTE
+  ════════════════════════════════════ */
+  function highlightCard(id) {
+    STATE.activeCard = id;
+    document.querySelectorAll('.sr-pha-card').forEach(function (el) {
+      el.classList.toggle('highlighted', el.id === 'card-' + id);
+    });
+    var card = document.getElementById('card-' + id);
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    renderMarkers(STATE.pharmacies);
+  }
+
+  /* ════════════════════════════════════
+     13. UTILITAIRES
+  ════════════════════════════════════ */
+  function expandRadius() {
+    var newR = Math.min(STATE.radius + 10, 50);
+    STATE.radius = newR;
+    document.getElementById('radiusSlider').value = newR;
+    document.getElementById('radiusLabel').textContent = newR + ' km';
+    drawRadiusCircle(newR);
+    fetchResults();
+  }
+
+  function showToast(msg, type) {
+    var toast = document.createElement('div');
+    toast.style.cssText =
+      'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);'
+      + 'background:' + (type === 'error' ? '#C53030' : 'var(--ink)') + ';'
+      + 'color:white;padding:10px 20px;border-radius:8px;'
+      + 'font-family:Syne,sans-serif;font-size:.82rem;font-weight:600;'
+      + 'z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.2);transition:opacity .4s;';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(function () { toast.style.opacity = '0'; }, 3000);
+    setTimeout(function () { toast.remove(); }, 3400);
+  }
+
+  /* ════════════════════════════════════
+     14. DÉLÉGATION D'ÉVÉNEMENTS
+  ════════════════════════════════════ */
+  function bindEvents() {
+    document.getElementById('geoBtn').addEventListener('click', locateMe);
+    document.getElementById('clearBtn').addEventListener('click', clearSearch);
+    document.getElementById('radiusSlider').addEventListener('input', function () {
+      onRadiusChange(this.value);
+    });
+    document.getElementById('recenterBtn').addEventListener('click', recenterMap);
+    document.getElementById('sortSelect').addEventListener('change', function () {
+      sortResults(this.value);
+    });
+
+    /* FIX : form submit → Entrée clavier + bouton Go mobile */
+    document.getElementById('srField').addEventListener('submit', function (e) {
+      e.preventDefault();
+      hideAC();
+      STATE.query = searchInput.value.trim();
+      fetchResults();
+    });
+
+    document.getElementById('catsBar').addEventListener('click', function (e) {
+      var pill = e.target.closest('.sr-cat-pill');
+      if (pill) filterCategory(pill.dataset.slug);
+    });
+
+    document.getElementById('resultsScroll').addEventListener('mouseover', function (e) {
+      var card = e.target.closest('.sr-pha-card');
+      if (card) {
+        STATE.activeCard = parseInt(card.dataset.id);
+        renderMarkers(STATE.pharmacies);
+      }
+    });
+    document.getElementById('resultsScroll').addEventListener('mouseout', function (e) {
+      var card = e.target.closest('.sr-pha-card');
+      if (card) {
+        STATE.activeCard = null;
+        renderMarkers(STATE.pharmacies);
+      }
+    });
+    document.getElementById('resultsScroll').addEventListener('click', function (e) {
+      var callBtn = e.target.closest('[data-phone]');
+      if (callBtn) {
+        e.preventDefault();
+        if (callBtn.dataset.phone) window.location.href = 'tel:' + callBtn.dataset.phone;
+        return;
+      }
+      if (e.target.id === 'btnLocateEmpty')  { locateMe();     return; }
+      if (e.target.id === 'btnExpandRadius') { expandRadius(); return; }
+      if (e.target.id === 'btnRetry')        { fetchResults(); return; }
+      var popBtn = e.target.closest('.sr-pop-item');
+      if (popBtn) { selectSuggestion(popBtn.dataset.name); return; }
+    });
+  }
+
+  /* ════════════════════════════════════
+     15. INIT
+  ════════════════════════════════════ */
+  document.addEventListener('DOMContentLoaded', function () {
+    bindEvents();
+    initMap();
+    renderMarkers(STATE.pharmacies);
+    renderList(STATE.pharmacies, STATE.total);
+    renderMedStrip(STATE.medications);
+  });
+
+})();
+</script>
+{% endblock %}

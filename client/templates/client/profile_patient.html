@@ -1,0 +1,1051 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mon profil — PharMap{% endblock %}
+{% block meta_description %}Gérez votre compte PharMap, vos commandes et vos ordonnances.{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ════════════════════════════════════════
+   PROFIL PATIENT — préfixe .pp-
+   Zéro conflit avec .rp- .rph- .pl- .sr-
+════════════════════════════════════════ */
+
+.pp-page { background: var(--sand); min-height: 100vh; }
+
+/* ── Hero ── */
+.pp-hero {
+  background: var(--navy);
+  padding: 88px 0 0;
+  position: relative; overflow: hidden;
+}
+.pp-hero-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 50% 60% at 0% 100%, rgba(26,122,94,0.20) 0%, transparent 65%),
+    radial-gradient(ellipse 35% 40% at 100% 0%,  rgba(184,132,28,0.10) 0%, transparent 65%);
+}
+.pp-hero-inner {
+  position: relative; z-index: 1;
+  display: flex; align-items: flex-end;
+  gap: 28px; padding-bottom: 0;
+}
+
+/* Avatar */
+.pp-avatar-wrap {
+  position: relative; flex-shrink: 0;
+}
+.pp-avatar {
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.15);
+  background: var(--navy-2);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.pp-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.pp-avatar-initials {
+  font-family: 'Fraunces', serif;
+  font-size: 2.2rem; font-weight: 300; color: white;
+  line-height: 1;
+}
+.pp-avatar-edit {
+  position: absolute; bottom: 2px; right: 2px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--green); border: 2px solid var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; transition: var(--t);
+}
+.pp-avatar-edit:hover { background: var(--green-2); transform: scale(1.1); }
+
+.pp-hero-info { padding-bottom: 24px; }
+.pp-hero-name {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(1.5rem, 2.8vw, 2.2rem);
+  color: white; font-weight: 300;
+  letter-spacing: -0.8px; line-height: 1.1;
+  margin-bottom: 6px;
+}
+.pp-hero-meta {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 14px; margin-bottom: 10px;
+}
+.pp-hero-meta-item {
+  display: flex; align-items: center; gap: 5px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.76rem; font-weight: 500;
+  color: rgba(255,255,255,0.45);
+}
+
+/* ── Onglets ── */
+.pp-tabs {
+  background: rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex; gap: 0; margin-top: 8px;
+  position: relative; z-index: 1;
+  overflow-x: auto; scrollbar-width: none;
+}
+.pp-tabs::-webkit-scrollbar { display: none; }
+.pp-tab {
+  padding: 14px 22px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem; font-weight: 600;
+  color: rgba(255,255,255,0.40);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  transition: var(--t); cursor: pointer;
+  white-space: nowrap; display: flex; align-items: center; gap: 7px;
+}
+.pp-tab:hover  { color: rgba(255,255,255,0.72); }
+.pp-tab.active { color: white; border-bottom-color: #6EDCBC; }
+.pp-tab-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.12);
+  border-radius: 999px;
+  min-width: 18px; height: 18px;
+  padding: 0 5px;
+  font-size: 0.62rem; font-weight: 700;
+}
+.pp-tab.active .pp-tab-count { background: rgba(110,220,188,0.2); color: #6EDCBC; }
+
+/* ── Corps ── */
+.pp-body { padding: 36px 0 80px; }
+.pp-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* ── Card générique ── */
+.pp-card {
+  background: white;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.pp-card:last-child { margin-bottom: 0; }
+.pp-card-head {
+  padding: 18px 22px 16px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 12px;
+}
+.pp-card-head-title {
+  font-family: 'Fraunces', serif;
+  font-size: 0.98rem; font-weight: 400; color: var(--ink);
+  display: flex; align-items: center; gap: 10px;
+}
+.pp-card-head-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Stats rapides ── */
+.pp-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0; background: var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  margin-bottom: 24px;
+}
+.pp-stat {
+  background: white; padding: 20px 18px;
+  text-align: center;
+}
+.pp-stat-val {
+  font-family: 'Fraunces', serif;
+  font-size: 1.8rem; color: var(--navy);
+  line-height: 1; letter-spacing: -0.5px;
+}
+.pp-stat-val.green { color: var(--green); }
+.pp-stat-val.gold  { color: var(--gold); }
+.pp-stat-lbl {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 600;
+  color: var(--ink-4); margin-top: 5px; letter-spacing: 0.2px;
+}
+
+/* ── Commande card ── */
+.pp-order-item {
+  display: flex; align-items: center;
+  gap: 14px; padding: 16px 22px;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none; transition: var(--t);
+}
+.pp-order-item:last-child { border-bottom: none; }
+.pp-order-item:hover { background: var(--sand); }
+
+.pp-order-icon {
+  width: 42px; height: 42px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.pp-order-pharmacy {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem; font-weight: 700; color: var(--ink);
+  margin-bottom: 3px;
+}
+.pp-order-meta {
+  font-size: 0.72rem; color: var(--ink-4);
+  display: flex; align-items: center; gap: 8px;
+}
+.pp-order-amount {
+  margin-left: auto; text-align: right; flex-shrink: 0;
+}
+.pp-order-price {
+  font-family: 'Fraunces', serif;
+  font-size: 1rem; font-weight: 700; color: var(--navy);
+  line-height: 1;
+}
+.pp-order-currency {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem; color: var(--ink-4); font-weight: 400;
+}
+
+/* ── Avis card ── */
+.pp-review-item {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line);
+  transition: var(--t);
+}
+.pp-review-item:last-child { border-bottom: none; }
+.pp-review-item:hover { background: var(--sand); }
+.pp-review-pharmacy {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem; font-weight: 700; color: var(--ink);
+  margin-bottom: 4px; display: flex; align-items: center;
+  justify-content: space-between; gap: 8px;
+}
+.pp-review-stars { color: var(--gold); letter-spacing: -1px; font-size: 0.9rem; }
+.pp-review-text {
+  font-size: 0.8rem; color: var(--ink-3); line-height: 1.7;
+  font-style: italic;
+}
+.pp-review-date { font-size: 0.68rem; color: var(--ink-5); margin-top: 4px; }
+
+/* ── Ordonnance ── */
+.pp-rx-item {
+  display: flex; align-items: center;
+  gap: 13px; padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+  transition: var(--t);
+}
+.pp-rx-item:last-child { border-bottom: none; }
+.pp-rx-item:hover { background: var(--sand); }
+.pp-rx-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--navy-pale);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.pp-rx-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem; font-weight: 700; color: var(--ink); margin-bottom: 2px;
+}
+.pp-rx-meta { font-size: 0.7rem; color: var(--ink-4); }
+
+/* ── Sidebar ── */
+.pp-sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+.pp-info-list { padding: 0; }
+.pp-info-row {
+  display: flex; align-items: center; gap: 13px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.pp-info-row:last-child { border-bottom: none; }
+.pp-info-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.pp-info-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.67rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.7px;
+  color: var(--ink-5); margin-bottom: 2px;
+}
+.pp-info-value { font-size: 0.84rem; color: var(--ink); font-weight: 500; }
+
+/* ── Sécurité ── */
+.pp-pw-field {
+  display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;
+}
+.pp-pw-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px; color: var(--ink-3);
+}
+.pp-pw-input {
+  width: 100%; padding: 11px 14px;
+  background: var(--sand);
+  border: 1.5px solid var(--line-2);
+  border-radius: var(--r-sm);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem; color: var(--ink);
+  outline: none; transition: var(--t);
+}
+.pp-pw-input:focus {
+  border-color: var(--navy); background: white;
+  box-shadow: 0 0 0 3px rgba(12,31,63,0.08);
+}
+.pp-pw-input.is-error { border-color: #C53030; background: #FFF5F5; }
+.pp-pw-error { font-size: 0.72rem; color: #C53030; }
+
+/* ── États vides ── */
+.pp-empty {
+  text-align: center; padding: 48px 24px;
+}
+.pp-empty-icon {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--sand-2);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+}
+.pp-empty-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1rem; color: var(--ink); margin-bottom: 7px; font-weight: 400;
+}
+.pp-empty-desc { font-size: 0.8rem; color: var(--ink-4); line-height: 1.7; }
+
+/* ── Boutons form ── */
+.pp-btn-submit {
+  padding: 12px 24px;
+  background: var(--navy); color: white;
+  border: none; border-radius: var(--r-sm);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.84rem; font-weight: 700;
+  cursor: pointer; transition: var(--t);
+  box-shadow: 0 4px 14px rgba(12,31,63,0.25);
+}
+.pp-btn-submit:hover {
+  background: var(--green);
+  box-shadow: 0 8px 24px rgba(26,122,94,0.35);
+  transform: translateY(-1px);
+}
+
+/* ── Status badges commandes ── */
+.pp-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 999px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.65rem; font-weight: 700;
+}
+.pp-status-PENDING    { background: #FBF4E4; color: var(--gold);  border: 1px solid #E8D190; }
+.pp-status-CONFIRMED  { background: var(--navy-pale); color: var(--navy); border: 1px solid var(--navy-tint); }
+.pp-status-READY      { background: #EBF5FB; color: #2471A3; border: 1px solid #BEE3F8; }
+.pp-status-DELIVERED  { background: var(--green-pale); color: var(--green); border: 1px solid var(--green-tint); }
+.pp-status-CANCELLED  { background: #FFF5F5; color: #C53030; border: 1px solid #FEB2B2; }
+
+/* ── Filtre commandes ── */
+.pp-filter-bar {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+  background: var(--sand);
+}
+.pp-filter-chip {
+  padding: 5px 14px; border-radius: 999px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem; font-weight: 700;
+  border: 1.5px solid var(--line-2);
+  background: white; color: var(--ink-3);
+  text-decoration: none; transition: var(--t);
+}
+.pp-filter-chip:hover  { border-color: var(--navy-tint); color: var(--navy); background: var(--navy-pale); }
+.pp-filter-chip.active { background: var(--navy); color: white; border-color: var(--navy); }
+
+/* ── Responsive ── */
+@media (max-width: 1020px) {
+  .pp-layout  { grid-template-columns: 1fr; }
+  .pp-sidebar { order: -1; }
+}
+@media (max-width: 768px) {
+  .pp-hero-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .pp-stats      { grid-template-columns: 1fr 1fr; }
+  .pp-hero       { padding: 72px 0 0; }
+}
+@media (max-width: 480px) {
+  .pp-stats { grid-template-columns: 1fr 1fr; }
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="pp-page">
+
+  <!-- ══ HERO ══ -->
+  <section class="pp-hero">
+    <div class="pp-hero-glow"></div>
+    <div class="container">
+      <div class="pp-hero-inner">
+
+        <!-- Avatar -->
+        <div class="pp-avatar-wrap">
+          <div class="pp-avatar">
+            {% if user.profile_picture %}
+              <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" />
+            {% else %}
+              <span class="pp-avatar-initials">
+                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+              </span>
+            {% endif %}
+          </div>
+          <a href="{% url 'patient:profile_edit' %}" class="pp-avatar-edit" title="Modifier la photo">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Infos -->
+        <div class="pp-hero-info">
+          <h1 class="pp-hero-name">
+            {{ user.get_full_name|default:user.username }}
+          </h1>
+          <div class="pp-hero-meta">
+            <div class="pp-hero-meta-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              {{ user.email }}
+            </div>
+            <div class="pp-hero-meta-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12"/>
+              </svg>
+              {{ user.phone|default:"—" }}
+            </div>
+            <div class="pp-hero-meta-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              Membre depuis {{ user.created_at|date:"F Y" }}
+            </div>
+            {% if user.is_verified %}
+              <span class="badge badge-green" style="font-size:.6rem;padding:2px 8px;">
+                ✓ Vérifié
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+      </div><!-- /hero-inner -->
+
+      <!-- Onglets -->
+      <div class="pp-tabs">
+        <a href="?tab=overview"
+           class="pp-tab {% if active_tab == 'overview' or not active_tab %}active{% endif %}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Aperçu
+        </a>
+        <a href="?tab=orders"
+           class="pp-tab {% if active_tab == 'orders' %}active{% endif %}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          Commandes
+          <span class="pp-tab-count">{{ stats.total_orders }}</span>
+        </a>
+        <a href="?tab=reviews"
+           class="pp-tab {% if active_tab == 'reviews' %}active{% endif %}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          Avis
+          <span class="pp-tab-count">{{ stats.total_reviews }}</span>
+        </a>
+        <a href="?tab=prescriptions"
+           class="pp-tab {% if active_tab == 'prescriptions' %}active{% endif %}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Ordonnances
+          <span class="pp-tab-count">{{ stats.total_prescriptions }}</span>
+        </a>
+        <a href="?tab=security"
+           class="pp-tab {% if active_tab == 'security' %}active{% endif %}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Sécurité
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ CORPS ══ -->
+  <div class="pp-body">
+    <div class="container">
+      <div class="pp-layout">
+
+        <!-- ══ COLONNE PRINCIPALE ══ -->
+        <div>
+
+          <!-- ─── APERÇU ─── -->
+          {% if active_tab == 'overview' or not active_tab %}
+
+            <!-- Stats -->
+            <div class="pp-stats">
+              <div class="pp-stat">
+                <div class="pp-stat-val">{{ stats.total_orders }}</div>
+                <div class="pp-stat-lbl">Commandes</div>
+              </div>
+              <div class="pp-stat">
+                <div class="pp-stat-val green">{{ stats.delivered_orders }}</div>
+                <div class="pp-stat-lbl">Livrées</div>
+              </div>
+              <div class="pp-stat">
+                <div class="pp-stat-val gold">{{ stats.total_spent|floatformat:0 }}</div>
+                <div class="pp-stat-lbl">XAF dépensés</div>
+              </div>
+              <div class="pp-stat">
+                <div class="pp-stat-val">{{ stats.total_reviews }}</div>
+                <div class="pp-stat-lbl">Avis donnés</div>
+              </div>
+            </div>
+
+            <!-- Commandes récentes -->
+            <div class="pp-card">
+              <div class="pp-card-head">
+                <div class="pp-card-head-title">
+                  <div class="pp-card-head-icon" style="background:var(--navy-pale);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                      <line x1="3" y1="6" x2="21" y2="6"/>
+                    </svg>
+                  </div>
+                  Commandes récentes
+                </div>
+                <a href="?tab=orders" class="btn btn-ghost btn-sm">Voir tout →</a>
+              </div>
+
+              {% if recent_orders %}
+                {% for order in recent_orders %}
+                  <a href="#" class="pp-order-item">
+                    <div class="pp-order-icon"
+                         style="background:{% if order.status == 'DELIVERED' %}var(--green-pale){% elif order.status == 'CANCELLED' %}#FFF5F5{% else %}var(--navy-pale){% endif %};">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                           stroke="{% if order.status == 'DELIVERED' %}var(--green){% elif order.status == 'CANCELLED' %}#C53030{% else %}var(--navy){% endif %}"
+                           stroke-width="1.8">
+                        <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
+                        <path d="M3 9l2-5h14l2 5"/>
+                      </svg>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                      <div class="pp-order-pharmacy">{{ order.pharmacy.name }}</div>
+                      <div class="pp-order-meta">
+                        <span>{{ order.created_at|date:"d/m/Y" }}</span>
+                        <span>·</span>
+                        <span>{{ order.items.count }} article{{ order.items.count|pluralize }}</span>
+                        <span class="pp-status pp-status-{{ order.status }}">
+                          {{ order.get_status_display }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="pp-order-amount">
+                      <div class="pp-order-price">{{ order.total_amount|floatformat:0 }}</div>
+                      <div class="pp-order-currency">XAF</div>
+                    </div>
+                  </a>
+                {% endfor %}
+              {% else %}
+                <div class="pp-empty">
+                  <div class="pp-empty-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="1.5">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                    </svg>
+                  </div>
+                  <div class="pp-empty-title">Aucune commande</div>
+                  <p class="pp-empty-desc">Votre historique de commandes apparaîtra ici.</p>
+                  <a href="{% url 'pharmacies:search' %}" class="btn btn-outline btn-sm" style="margin-top:12px;">
+                    Rechercher un médicament →
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Avis récents -->
+            <div class="pp-card">
+              <div class="pp-card-head">
+                <div class="pp-card-head-title">
+                  <div class="pp-card-head-icon" style="background:var(--gold-pale);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  Mes avis
+                </div>
+                <a href="?tab=reviews" class="btn btn-ghost btn-sm">Voir tout →</a>
+              </div>
+
+              {% if recent_reviews %}
+                {% for review in recent_reviews %}
+                  <div class="pp-review-item">
+                    <div class="pp-review-pharmacy">
+                      <span>{{ review.pharmacy.name }}</span>
+                      <span class="pp-review-stars">
+                        {% for i in "12345" %}
+                          {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                      </span>
+                    </div>
+                    {% if review.comment %}
+                      <p class="pp-review-text">"{{ review.comment }}"</p>
+                    {% endif %}
+                    <div class="pp-review-date">{{ review.created_at|date:"d F Y" }}</div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="pp-empty">
+                  <div class="pp-empty-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="1.5">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <div class="pp-empty-title">Aucun avis</div>
+                  <p class="pp-empty-desc">Vos avis sur les pharmacies apparaîtront ici.</p>
+                </div>
+              {% endif %}
+            </div>
+
+          {% endif %}
+
+
+          <!-- ─── COMMANDES ─── -->
+          {% if active_tab == 'orders' %}
+            <div class="pp-card">
+              <div class="pp-card-head">
+                <div class="pp-card-head-title">
+                  <div class="pp-card-head-icon" style="background:var(--navy-pale);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                      <line x1="3" y1="6" x2="21" y2="6"/>
+                    </svg>
+                  </div>
+                  Toutes mes commandes
+                </div>
+              </div>
+
+              <!-- Filtres statut -->
+              <div class="pp-filter-bar">
+                <a href="?tab=orders" class="pp-filter-chip {% if not status_filter %}active{% endif %}">Toutes</a>
+                <a href="?tab=orders&status=PENDING"   class="pp-filter-chip {% if status_filter == 'PENDING'   %}active{% endif %}">En attente</a>
+                <a href="?tab=orders&status=CONFIRMED" class="pp-filter-chip {% if status_filter == 'CONFIRMED' %}active{% endif %}">Confirmées</a>
+                <a href="?tab=orders&status=READY"     class="pp-filter-chip {% if status_filter == 'READY'     %}active{% endif %}">Prêtes</a>
+                <a href="?tab=orders&status=DELIVERED" class="pp-filter-chip {% if status_filter == 'DELIVERED' %}active{% endif %}">Livrées</a>
+                <a href="?tab=orders&status=CANCELLED" class="pp-filter-chip {% if status_filter == 'CANCELLED' %}active{% endif %}">Annulées</a>
+              </div>
+
+              {% if orders %}
+                {% for order in orders %}
+                  <a href="#" class="pp-order-item">
+                    <div class="pp-order-icon"
+                         style="background:{% if order.status == 'DELIVERED' %}var(--green-pale){% elif order.status == 'CANCELLED' %}#FFF5F5{% else %}var(--navy-pale){% endif %};">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                           stroke="{% if order.status == 'DELIVERED' %}var(--green){% elif order.status == 'CANCELLED' %}#C53030{% else %}var(--navy){% endif %}"
+                           stroke-width="1.8">
+                        <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
+                        <path d="M3 9l2-5h14l2 5"/>
+                        <line x1="12" y1="9" x2="12" y2="20"/>
+                        <line x1="3" y1="14" x2="21" y2="14"/>
+                      </svg>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                      <div class="pp-order-pharmacy">{{ order.pharmacy.name }}</div>
+                      <div class="pp-order-meta">
+                        <span>{{ order.created_at|date:"d/m/Y à H:i" }}</span>
+                        <span>·</span>
+                        <span>{{ order.items.count }} article{{ order.items.count|pluralize }}</span>
+                        <span class="pp-status pp-status-{{ order.status }}">
+                          {{ order.get_status_display }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="pp-order-amount">
+                      <div class="pp-order-price">{{ order.total_amount|floatformat:0 }}</div>
+                      <div class="pp-order-currency">XAF</div>
+                    </div>
+                  </a>
+                {% endfor %}
+              {% else %}
+                <div class="pp-empty">
+                  <div class="pp-empty-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="1.5">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                    </svg>
+                  </div>
+                  <div class="pp-empty-title">Aucune commande ici</div>
+                  <p class="pp-empty-desc">Aucune commande ne correspond à ce filtre.</p>
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+
+
+          <!-- ─── AVIS ─── -->
+          {% if active_tab == 'reviews' %}
+            <div class="pp-card">
+              <div class="pp-card-head">
+                <div class="pp-card-head-title">
+                  <div class="pp-card-head-icon" style="background:var(--gold-pale);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  Mes avis
+                </div>
+              </div>
+              {% if recent_reviews %}
+                {% for review in recent_reviews %}
+                  <div class="pp-review-item">
+                    <div class="pp-review-pharmacy">
+                      <span>{{ review.pharmacy.name }}</span>
+                      <span class="pp-review-stars">
+                        {% for i in "12345" %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}
+                      </span>
+                    </div>
+                    {% if review.comment %}
+                      <p class="pp-review-text">"{{ review.comment }}"</p>
+                    {% endif %}
+                    <div class="pp-review-date">{{ review.created_at|date:"d F Y" }}</div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="pp-empty">
+                  <div class="pp-empty-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="1.5">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <div class="pp-empty-title">Aucun avis</div>
+                  <p class="pp-empty-desc">Vous n'avez pas encore laissé d'avis sur une pharmacie.</p>
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+
+
+          <!-- ─── ORDONNANCES ─── -->
+          {% if active_tab == 'prescriptions' %}
+            <div class="pp-card">
+              <div class="pp-card-head">
+                <div class="pp-card-head-title">
+                  <div class="pp-card-head-icon" style="background:var(--green-pale);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                  </div>
+                  Mes ordonnances
+                </div>
+              </div>
+              {% if prescriptions %}
+                {% for rx in prescriptions %}
+                  <div class="pp-rx-item">
+                    <div class="pp-rx-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                      </svg>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                      <div class="pp-rx-name">
+                        Ordonnance #{{ rx.id|truncatechars:8 }}
+                      </div>
+                      <div class="pp-rx-meta">
+                        {{ rx.created_at|date:"d F Y" }}
+                        {% if rx.order %}· Commande liée{% endif %}
+                      </div>
+                    </div>
+                    <span class="pp-status
+                      {% if rx.status == 'APPROVED' %}pp-status-DELIVERED
+                      {% elif rx.status == 'REJECTED' %}pp-status-CANCELLED
+                      {% else %}pp-status-PENDING{% endif %}">
+                      {% if rx.status == 'APPROVED' %}Approuvée
+                      {% elif rx.status == 'REJECTED' %}Refusée
+                      {% else %}En attente{% endif %}
+                    </span>
+                    {% if rx.image %}
+                      <a href="{{ rx.image.url }}" target="_blank"
+                         class="btn btn-ghost btn-sm" style="margin-left:8px;"
+                         onclick="event.stopPropagation()">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                          <polyline points="15 3 21 3 21 9"/>
+                          <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                        Voir
+                      </a>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="pp-empty">
+                  <div class="pp-empty-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="1.5">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    </svg>
+                  </div>
+                  <div class="pp-empty-title">Aucune ordonnance</div>
+                  <p class="pp-empty-desc">Vos ordonnances téléchargées apparaîtront ici.</p>
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+
+
+          <!-- ─── SÉCURITÉ ─── -->
+          {% if active_tab == 'security' %}
+            <div class="pp-card">
+              <div class="pp-card-head">
+                <div class="pp-card-head-title">
+                  <div class="pp-card-head-icon" style="background:var(--navy-pale);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  </div>
+                  Changer le mot de passe
+                </div>
+              </div>
+              <div style="padding:24px;">
+                <form method="POST" action="{% url 'patient:profile_password' %}">
+                  {% csrf_token %}
+
+                  <div class="pp-pw-field">
+                    <label class="pp-pw-label" for="id_current_password">Mot de passe actuel</label>
+                    <input class="pp-pw-input {% if pw_errors.current_password %}is-error{% endif %}"
+                           type="password" id="id_current_password" name="current_password"
+                           placeholder="Votre mot de passe actuel" />
+                    {% if pw_errors.current_password %}
+                      <span class="pp-pw-error">{{ pw_errors.current_password }}</span>
+                    {% endif %}
+                  </div>
+
+                  <div class="pp-pw-field">
+                    <label class="pp-pw-label" for="id_new_password">Nouveau mot de passe</label>
+                    <input class="pp-pw-input {% if pw_errors.new_password %}is-error{% endif %}"
+                           type="password" id="id_new_password" name="new_password"
+                           placeholder="8 caractères minimum" />
+                    {% if pw_errors.new_password %}
+                      <span class="pp-pw-error">{{ pw_errors.new_password }}</span>
+                    {% endif %}
+                  </div>
+
+                  <div class="pp-pw-field">
+                    <label class="pp-pw-label" for="id_confirm_password">Confirmer</label>
+                    <input class="pp-pw-input {% if pw_errors.confirm_password %}is-error{% endif %}"
+                           type="password" id="id_confirm_password" name="confirm_password"
+                           placeholder="Répétez le nouveau mot de passe" />
+                    {% if pw_errors.confirm_password %}
+                      <span class="pp-pw-error">{{ pw_errors.confirm_password }}</span>
+                    {% endif %}
+                  </div>
+
+                  <button type="submit" class="pp-btn-submit">
+                    Mettre à jour le mot de passe
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Zone danger -->
+            <div class="pp-card" style="border-color:#FDDCDC;">
+              <div class="pp-card-head" style="background:#FFF5F5;border-color:#FDDCDC;">
+                <div class="pp-card-head-title" style="color:#C53030;">
+                  <div class="pp-card-head-icon" style="background:#FDDCDC;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C53030" stroke-width="1.8">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                      <line x1="12" y1="9" x2="12" y2="13"/>
+                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                  </div>
+                  Zone de danger
+                </div>
+              </div>
+              <div style="padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                <div>
+                  <div style="font-family:'Syne',sans-serif;font-size:.84rem;font-weight:700;color:var(--ink);margin-bottom:4px;">
+                    Supprimer mon compte
+                  </div>
+                  <div style="font-size:.78rem;color:var(--ink-4);line-height:1.6;">
+                    Cette action est irréversible. Toutes vos données seront supprimées.
+                  </div>
+                </div>
+                <button type="button"
+                        class="btn btn-sm"
+                        style="background:#FFF5F5;color:#C53030;border:1.5px solid #FDDCDC;white-space:nowrap;flex-shrink:0;"
+                        onclick="ppConfirmDelete()">
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          {% endif %}
+
+        </div><!-- /colonne principale -->
+
+
+        <!-- ══ SIDEBAR ══ -->
+        <div class="pp-sidebar">
+
+          <!-- Infos personnelles -->
+          <div class="pp-card">
+            <div class="pp-card-head">
+              <div class="pp-card-head-title">
+                <div class="pp-card-head-icon" style="background:var(--navy-pale);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                  </svg>
+                </div>
+                Mes informations
+              </div>
+              <a href="{% url 'patient:profile_edit' %}" class="btn btn-ghost btn-sm">
+                Modifier →
+              </a>
+            </div>
+            <div class="pp-info-list">
+              <div class="pp-info-row">
+                <div class="pp-info-icon" style="background:var(--navy-pale);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="pp-info-label">Nom complet</div>
+                  <div class="pp-info-value">{{ user.get_full_name|default:"—" }}</div>
+                </div>
+              </div>
+              <div class="pp-info-row">
+                <div class="pp-info-icon" style="background:var(--green-pale);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="pp-info-label">Email</div>
+                  <div class="pp-info-value" style="font-size:.78rem;word-break:break-all;">{{ user.email }}</div>
+                </div>
+              </div>
+              <div class="pp-info-row">
+                <div class="pp-info-icon" style="background:var(--gold-pale);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="pp-info-label">Téléphone</div>
+                  <div class="pp-info-value">{{ user.phone|default:"—" }}</div>
+                </div>
+              </div>
+              <div class="pp-info-row">
+                <div class="pp-info-icon" style="background:var(--sand-2);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="1.8">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="pp-info-label">Membre depuis</div>
+                  <div class="pp-info-value">{{ user.created_at|date:"d F Y" }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Raccourcis -->
+          <div class="pp-card">
+            <div class="pp-card-head">
+              <div class="pp-card-head-title">Raccourcis</div>
+            </div>
+            <div style="padding:8px;">
+              <a href="{% url 'pharmacies:search' %}"
+                 class="pp-info-row" style="text-decoration:none;border-radius:var(--r-sm);transition:var(--t);"
+                 onmouseover="this.style.background='var(--sand)'" onmouseout="this.style.background=''">
+                <div class="pp-info-icon" style="background:var(--navy-pale);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                </div>
+                <div style="font-family:'Syne',sans-serif;font-size:.8rem;font-weight:600;color:var(--ink);">
+                  Rechercher un médicament
+                </div>
+              </a>
+              <a href="{% url 'pharmacies:pharmacy_list' %}"
+                 class="pp-info-row" style="text-decoration:none;border-radius:var(--r-sm);transition:var(--t);"
+                 onmouseover="this.style.background='var(--sand)'" onmouseout="this.style.background=''">
+                <div class="pp-info-icon" style="background:var(--green-pale);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8">
+                    <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
+                    <path d="M3 9l2-5h14l2 5"/>
+                  </svg>
+                </div>
+                <div style="font-family:'Syne',sans-serif;font-size:.8rem;font-weight:600;color:var(--ink);">
+                  Voir les pharmacies
+                </div>
+              </a>
+              <a href="{% url 'auth_user:logout' %}"
+                 class="pp-info-row" style="text-decoration:none;border-radius:var(--r-sm);transition:var(--t);"
+                 onmouseover="this.style.background='#FFF5F5'" onmouseout="this.style.background=''">
+                <div class="pp-info-icon" style="background:#FFF5F5;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C53030" stroke-width="1.8">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                </div>
+                <div style="font-family:'Syne',sans-serif;font-size:.8rem;font-weight:600;color:#C53030;">
+                  Déconnexion
+                </div>
+              </a>
+            </div>
+          </div>
+
+        </div><!-- /sidebar -->
+
+      </div><!-- /pp-layout -->
+    </div><!-- /container -->
+  </div><!-- /pp-body -->
+
+</div><!-- /pp-page -->
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+function ppConfirmDelete() {
+  if (confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
+    alert('Contactez le support pour finaliser la suppression de votre compte.');
+  }
+}
+</script>
+{% endblock %}

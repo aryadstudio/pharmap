@@ -1,0 +1,892 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inscrire ma pharmacie — PharMap{% endblock %}
+{% block meta_description %}Rejoignez le réseau PharMap et rendez votre pharmacie visible auprès de milliers de patients au Gabon.{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Cache la navbar globale — cette page a son propre hero ── */
+#mainNavbar,
+.bottom-nav { display: none !important; }
+
+/* ════════════════════════════════════════
+   REGISTER PHARMACIST — préfixe .rph-
+   Zéro conflit avec .rp- .lp- .lph- .sr-
+════════════════════════════════════════ */
+
+.rph-page {
+  background: var(--sand);
+  min-height: 100vh;
+}
+
+/* ── Hero ── */
+.rph-hero {
+  background: var(--navy);
+  padding: 56px 0 56px;
+  position: relative;
+  overflow: hidden;
+}
+.rph-hero-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 60% at 5% 80%,  rgba(26,122,94,0.22) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 45% at 95% 10%, rgba(184,132,28,0.12) 0%, transparent 65%);
+}
+.rph-hero-inner { position: relative; z-index: 1; }
+
+/* Logo inline dans le hero (remplace la navbar) */
+.rph-hero-logo {
+  display: inline-flex; align-items: center; gap: 10px;
+  text-decoration: none; margin-bottom: 32px;
+}
+.rph-hero-logo-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: white;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+.rph-hero-logo-name {
+  font-family: 'Fraunces', serif;
+  font-size: 1.2rem; color: white; font-weight: 300;
+  letter-spacing: -0.3px;
+}
+
+.rph-hero-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem; font-weight: 600;
+  color: rgba(255,255,255,0.42);
+  text-decoration: none; margin-bottom: 24px;
+  transition: var(--t);
+}
+.rph-hero-back:hover { color: rgba(255,255,255,0.75); }
+
+.rph-hero-eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 1.8px; text-transform: uppercase;
+  color: #6EDCBC; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.rph-hero-eyebrow-bar { width: 18px; height: 2px; background: var(--gold-2); border-radius: 2px; }
+
+.rph-hero-h1 {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  color: white; font-weight: 300;
+  letter-spacing: -1.5px; line-height: 1.1;
+  margin-bottom: 14px;
+}
+.rph-hero-h1 em { font-style: italic; color: #6EDCBC; }
+
+.rph-hero-sub {
+  font-size: 0.95rem; color: rgba(255,255,255,0.45);
+  line-height: 1.8; max-width: 520px;
+}
+
+/* ── Layout principal ── */
+.rph-body { padding: 48px 0 80px; }
+
+.rph-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+/* ── Card générique ── */
+.rph-card {
+  background: white;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.rph-card:last-child { margin-bottom: 0; }
+
+.rph-card-head {
+  padding: 20px 24px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 13px;
+}
+.rph-card-head-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.rph-card-head-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1rem; font-weight: 400; color: var(--ink);
+}
+.rph-card-head-sub { font-size: 0.72rem; color: var(--ink-4); margin-top: 2px; }
+.rph-card-step {
+  margin-left: auto; flex-shrink: 0;
+  font-family: 'Fraunces', serif;
+  font-size: 1.6rem; font-weight: 300; font-style: italic;
+  color: var(--sand-2);
+}
+.rph-card-body { padding: 24px; }
+
+/* ── Champs ── */
+.rph-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.rph-row3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; }
+
+.rph-field {
+  display: flex; flex-direction: column;
+  gap: 6px; margin-bottom: 18px;
+}
+.rph-field:last-child { margin-bottom: 0; }
+.rph-field-full { margin-bottom: 18px; }
+
+.rph-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--ink-3);
+}
+.rph-label-opt {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem; font-weight: 400;
+  color: var(--ink-5); margin-left: 4px;
+  text-transform: none; letter-spacing: 0;
+}
+
+.rph-input {
+  width: 100%; padding: 11px 14px;
+  background: var(--sand);
+  border: 1.5px solid var(--line-2);
+  border-radius: var(--r-sm);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem; color: var(--ink);
+  outline: none; transition: var(--t); box-sizing: border-box;
+}
+.rph-input:focus {
+  border-color: var(--navy); background: white;
+  box-shadow: 0 0 0 3px rgba(12,31,63,0.08);
+}
+.rph-input.is-error { border-color: #C53030; background: #FFF5F5; }
+.rph-input::placeholder { color: var(--ink-5); }
+textarea.rph-input { resize: vertical; min-height: 80px; }
+
+.rph-error {
+  font-size: 0.72rem; color: #C53030;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* Password toggle */
+.rph-pw-wrap { position: relative; }
+.rph-pw-toggle {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-4); padding: 4px;
+  display: flex; align-items: center; transition: var(--t);
+}
+.rph-pw-toggle:hover { color: var(--navy); }
+
+/* Toggle 24h */
+.rph-toggle-wrap {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px;
+  background: var(--sand);
+  border: 1.5px solid var(--line-2);
+  border-radius: var(--r-sm);
+  cursor: pointer; transition: var(--t);
+  margin-bottom: 18px;
+}
+.rph-toggle-wrap:hover { border-color: var(--navy-tint); background: var(--navy-pale); }
+.rph-toggle-wrap input[type="checkbox"] { display: none; }
+.rph-toggle-switch {
+  width: 40px; height: 22px; flex-shrink: 0;
+  background: var(--line-2); border-radius: 999px;
+  position: relative; transition: var(--t);
+}
+.rph-toggle-switch::after {
+  content: ''; position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  background: white; border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  transition: var(--t);
+}
+.rph-toggle-wrap.is-on .rph-toggle-switch { background: var(--green); }
+.rph-toggle-wrap.is-on .rph-toggle-switch::after { left: 21px; }
+.rph-toggle-label { font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--ink); }
+.rph-toggle-sub   { font-size: 0.71rem; color: var(--ink-4); margin-top: 1px; }
+
+/* Carte Leaflet */
+.rph-map-wrap {
+  border-radius: var(--r); overflow: hidden;
+  height: 260px; position: relative;
+  border: 1.5px solid var(--line-2); margin-bottom: 14px;
+}
+#rphMap { position: absolute; inset: 0; height: 100% !important; width: 100% !important; }
+.rph-map-hint {
+  font-size: 0.72rem; color: var(--ink-4);
+  display: flex; align-items: center; gap: 6px; margin-bottom: 18px;
+}
+.rph-latlon { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+
+/* Geo bouton */
+.rph-geo-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: var(--r-sm);
+  border: 1.5px solid var(--line-2);
+  background: white; color: var(--ink-3);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; transition: var(--t);
+  width: 100%; justify-content: center; margin-bottom: 14px;
+}
+.rph-geo-btn:hover  { border-color: var(--navy); color: var(--navy); background: var(--navy-pale); }
+.rph-geo-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+
+/* Upload logo */
+.rph-upload {
+  border: 2px dashed var(--line-2); border-radius: var(--r-sm);
+  padding: 24px; text-align: center; cursor: pointer;
+  transition: var(--t); position: relative; margin-bottom: 18px;
+}
+.rph-upload:hover { border-color: var(--navy-tint); background: var(--navy-pale); }
+.rph-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.rph-upload-icon {
+  width: 44px; height: 44px; border-radius: 50%; background: var(--sand-2);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;
+}
+.rph-upload-title { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--ink); }
+.rph-upload-sub   { font-size: 0.72rem; color: var(--ink-4); margin-top: 3px; }
+.rph-upload-preview {
+  display: none; width: 64px; height: 64px;
+  object-fit: cover; border-radius: var(--r-sm);
+  margin: 0 auto 8px; border: 2px solid var(--line);
+}
+
+/* Sidebar */
+.rph-sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+.rph-info-card {
+  background: var(--navy); border-radius: var(--r-lg);
+  padding: 24px; position: relative; overflow: hidden;
+}
+.rph-info-card::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(26,122,94,0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+.rph-info-card-eyebrow {
+  font-family: 'Syne', sans-serif; font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 1.4px; text-transform: uppercase;
+  color: rgba(255,255,255,0.38); margin-bottom: 8px;
+}
+.rph-info-card-title {
+  font-family: 'Fraunces', serif; font-size: 1.2rem; color: white;
+  font-weight: 300; line-height: 1.25; margin-bottom: 16px; letter-spacing: -0.3px;
+}
+.rph-info-card-title em { font-style: italic; color: #6EDCBC; }
+
+.rph-info-steps { display: flex; flex-direction: column; gap: 14px; }
+.rph-info-step  { display: flex; align-items: flex-start; gap: 12px; }
+.rph-info-step-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(110,220,188,0.18); border: 1px solid rgba(110,220,188,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700; color: #6EDCBC;
+  flex-shrink: 0; margin-top: 1px;
+}
+.rph-info-step-text { font-size: 0.78rem; color: rgba(255,255,255,0.55); line-height: 1.6; }
+.rph-info-step-text strong { color: rgba(255,255,255,0.82); font-weight: 600; }
+
+.rph-help-card {
+  background: white; border-radius: var(--r-lg);
+  border: 1px solid var(--line); padding: 20px;
+}
+.rph-help-title { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+.rph-help-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--line);
+  font-size: 0.78rem; color: var(--ink-3);
+}
+.rph-help-item:last-child { border-bottom: none; }
+.rph-help-item svg { flex-shrink: 0; color: var(--green); }
+
+/* Submit */
+.rph-submit-wrap { padding: 24px; border-top: 1px solid var(--line); background: var(--sand); }
+.rph-submit {
+  width: 100%; padding: 15px;
+  background: var(--navy); color: white;
+  border: none; border-radius: var(--r-sm);
+  font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700;
+  cursor: pointer; transition: var(--t);
+  box-shadow: 0 4px 14px rgba(12,31,63,0.3);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.rph-submit:hover {
+  background: var(--green);
+  box-shadow: 0 8px 24px rgba(26,122,94,0.38);
+  transform: translateY(-1px);
+}
+.rph-submit-note { text-align: center; margin-top: 10px; font-size: 0.72rem; color: var(--ink-5); }
+
+/* Messages */
+.rph-messages { margin-bottom: 20px; }
+.rph-msg {
+  padding: 10px 14px; border-radius: var(--r-sm);
+  font-size: 0.82rem; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.rph-msg-error   { background: #FFF5F5; color: #C53030; border: 1px solid #FDDCDC; }
+.rph-msg-success { background: #F0FBF7; color: #1A7A5E; border: 1px solid #C8EFE3; }
+
+/* Leaflet popup */
+#rphMap .leaflet-popup-content-wrapper {
+  border-radius: var(--r) !important; box-shadow: var(--sh-2) !important;
+  border: 1px solid var(--line) !important; padding: 0 !important; overflow: hidden;
+}
+#rphMap .leaflet-popup-content { margin: 0 !important; padding: 12px 14px; }
+#rphMap .leaflet-popup-tip { display: none; }
+
+/* Responsive */
+@media (max-width: 1020px) {
+  .rph-layout { grid-template-columns: 1fr; }
+  .rph-sidebar { order: -1; }
+}
+@media (max-width: 640px) {
+  .rph-row  { grid-template-columns: 1fr; }
+  .rph-row3 { grid-template-columns: 1fr; }
+  .rph-hero { padding: 40px 0 40px; }
+  .rph-body { padding: 28px 0 60px; }
+}
+</style>
+{% endblock %}
+
+{% block main_class %}page-content-flush{% endblock %}
+
+{% block content %}
+<div class="rph-page">
+
+  <!-- ══ HERO ══ -->
+  <section class="rph-hero">
+    <div class="rph-hero-glow"></div>
+    <div class="container">
+      <div class="rph-hero-inner">
+
+        <!-- Logo (remplace la navbar masquée) -->
+        <a href="{% url 'home' %}" class="rph-hero-logo">
+          <div class="rph-hero-logo-icon">
+            <img src="{% static 'icons/symbole-logo.png' %}" width="20" height="20" alt="PharMap" />
+          </div>
+          <span class="rph-hero-logo-name">PharMap</span>
+        </a>
+
+        <a href="{% url 'auth_user:register' %}" class="rph-hero-back">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Vous êtes patient ? S'inscrire ici
+        </a>
+
+        <div class="rph-hero-eyebrow">
+          <span class="rph-hero-eyebrow-bar"></span>
+          Espace pharmacien
+        </div>
+
+        <h1 class="rph-hero-h1">
+          Rejoignez le réseau<br /><em>PharMap</em>
+        </h1>
+        <p class="rph-hero-sub">
+          Inscrivez votre pharmacie, gérez votre stock en ligne et
+          augmentez votre visibilité auprès de milliers de patients.
+          Votre profil sera validé par notre équipe sous 24h.
+        </p>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ CORPS ══ -->
+  <div class="rph-body">
+    <div class="container">
+
+      {% if messages %}
+        <div class="rph-messages">
+          {% for msg in messages %}
+            <div class="rph-msg {% if msg.tags == 'error' %}rph-msg-error{% else %}rph-msg-success{% endif %}">
+              {{ msg }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="POST" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <div class="rph-layout">
+
+          <!-- ══ COLONNE PRINCIPALE ══ -->
+          <div>
+
+            <!-- ÉTAPE 1 : Compte -->
+            <div class="rph-card">
+              <div class="rph-card-head">
+                <div class="rph-card-head-icon" style="background:var(--navy-pale);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="rph-card-head-title">Compte responsable</div>
+                  <div class="rph-card-head-sub">Informations du pharmacien titulaire</div>
+                </div>
+                <span class="rph-card-step">01</span>
+              </div>
+              <div class="rph-card-body">
+                <div class="rph-row">
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_first_name">Prénom</label>
+                    <input class="rph-input {% if form.first_name.errors %}is-error{% endif %}"
+                           type="text" id="id_first_name" name="first_name"
+                           value="{{ form.first_name.value|default:'' }}"
+                           placeholder="Jean-Pierre" autocomplete="given-name" />
+                    {% for err in form.first_name.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_last_name">Nom</label>
+                    <input class="rph-input {% if form.last_name.errors %}is-error{% endif %}"
+                           type="text" id="id_last_name" name="last_name"
+                           value="{{ form.last_name.value|default:'' }}"
+                           placeholder="Ndong" autocomplete="family-name" />
+                    {% for err in form.last_name.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                </div>
+                <div class="rph-row">
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_email">Email professionnel</label>
+                    <input class="rph-input {% if form.email.errors %}is-error{% endif %}"
+                           type="email" id="id_email" name="email"
+                           value="{{ form.email.value|default:'' }}"
+                           placeholder="contact@pharma.ga" autocomplete="email" />
+                    {% for err in form.email.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_phone">Téléphone personnel</label>
+                    <input class="rph-input {% if form.phone.errors %}is-error{% endif %}"
+                           type="tel" id="id_phone" name="phone"
+                           value="{{ form.phone.value|default:'' }}"
+                           placeholder="+241 06 00 00 00" autocomplete="tel" />
+                    {% for err in form.phone.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                </div>
+                <div class="rph-row">
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_password1">Mot de passe</label>
+                    <div class="rph-pw-wrap">
+                      <input class="rph-input {% if form.password1.errors %}is-error{% endif %}"
+                             type="password" id="id_password1" name="password1"
+                             placeholder="8 caractères minimum" autocomplete="new-password" />
+                      <button type="button" class="rph-pw-toggle" onclick="rphTogglePw('id_password1', this)">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      </button>
+                    </div>
+                    {% for err in form.password1.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_password2">Confirmer</label>
+                    <div class="rph-pw-wrap">
+                      <input class="rph-input {% if form.password2.errors %}is-error{% endif %}"
+                             type="password" id="id_password2" name="password2"
+                             placeholder="Répétez le mot de passe" autocomplete="new-password" />
+                      <button type="button" class="rph-pw-toggle" onclick="rphTogglePw('id_password2', this)">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      </button>
+                    </div>
+                    {% for err in form.password2.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ÉTAPE 2 : Pharmacie -->
+            <div class="rph-card">
+              <div class="rph-card-head">
+                <div class="rph-card-head-icon" style="background:var(--green-pale);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8">
+                    <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
+                    <path d="M3 9l2-5h14l2 5"/>
+                    <line x1="12" y1="9" x2="12" y2="20"/>
+                    <line x1="3" y1="14" x2="21" y2="14"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="rph-card-head-title">Informations de la pharmacie</div>
+                  <div class="rph-card-head-sub">Ces informations seront visibles par les patients</div>
+                </div>
+                <span class="rph-card-step">02</span>
+              </div>
+              <div class="rph-card-body">
+                <div class="rph-field-full">
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_pharmacy_name">Nom de la pharmacie</label>
+                    <input class="rph-input {% if form.pharmacy_name.errors %}is-error{% endif %}"
+                           type="text" id="id_pharmacy_name" name="pharmacy_name"
+                           value="{{ form.pharmacy_name.value|default:'' }}"
+                           placeholder="Pharmacie Centrale" />
+                    {% for err in form.pharmacy_name.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                </div>
+                <div class="rph-field-full">
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_description">
+                      Description <span class="rph-label-opt">(optionnel)</span>
+                    </label>
+                    <textarea class="rph-input {% if form.description.errors %}is-error{% endif %}"
+                              id="id_description" name="description"
+                              placeholder="Présentez votre pharmacie, vos spécialités…">{{ form.description.value|default:'' }}</textarea>
+                    {% for err in form.description.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                </div>
+                <div class="rph-row">
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_pharmacy_phone">Téléphone</label>
+                    <input class="rph-input {% if form.pharmacy_phone.errors %}is-error{% endif %}"
+                           type="tel" id="id_pharmacy_phone" name="pharmacy_phone"
+                           value="{{ form.pharmacy_phone.value|default:'' }}"
+                           placeholder="+241 01 23 45 67" />
+                    {% for err in form.pharmacy_phone.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_pharmacy_email">
+                      Email <span class="rph-label-opt">(optionnel)</span>
+                    </label>
+                    <input class="rph-input {% if form.pharmacy_email.errors %}is-error{% endif %}"
+                           type="email" id="id_pharmacy_email" name="pharmacy_email"
+                           value="{{ form.pharmacy_email.value|default:'' }}"
+                           placeholder="pharmacie@exemple.ga" />
+                    {% for err in form.pharmacy_email.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                </div>
+                <div class="rph-field">
+                  <label class="rph-label">Logo <span class="rph-label-opt">(optionnel)</span></label>
+                  <label class="rph-upload" id="rphUploadLabel">
+                    <input type="file" name="logo" id="id_logo" accept="image/*" onchange="rphPreviewLogo(this)" />
+                    <img id="rphLogoPreview" class="rph-upload-preview" src="" alt="Aperçu" />
+                    <div class="rph-upload-icon" id="rphUploadIcon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="1.8">
+                        <rect x="3" y="3" width="18" height="18" rx="3"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                      </svg>
+                    </div>
+                    <div class="rph-upload-title" id="rphUploadTitle">Cliquez pour ajouter un logo</div>
+                    <div class="rph-upload-sub">PNG, JPG, WEBP — max 5 Mo</div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- ÉTAPE 3 : Adresse & Carte -->
+            <div class="rph-card">
+              <div class="rph-card-head">
+                <div class="rph-card-head-icon" style="background:var(--gold-pale);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="rph-card-head-title">Adresse &amp; Localisation</div>
+                  <div class="rph-card-head-sub">Placez le marqueur sur votre pharmacie</div>
+                </div>
+                <span class="rph-card-step">03</span>
+              </div>
+              <div class="rph-card-body">
+                <div class="rph-field-full">
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_pharmacy_address">Adresse complète</label>
+                    <textarea class="rph-input {% if form.pharmacy_address.errors %}is-error{% endif %}"
+                              id="id_pharmacy_address" name="pharmacy_address" rows="2"
+                              placeholder="Boulevard Triomphal, Quartier…">{{ form.pharmacy_address.value|default:'' }}</textarea>
+                    {% for err in form.pharmacy_address.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                </div>
+                <div class="rph-row">
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_pharmacy_city">Ville</label>
+                    <input class="rph-input {% if form.pharmacy_city.errors %}is-error{% endif %}"
+                           type="text" id="id_pharmacy_city" name="pharmacy_city"
+                           value="{{ form.pharmacy_city.value|default:'' }}"
+                           placeholder="Libreville" />
+                    {% for err in form.pharmacy_city.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_pharmacy_country">Pays</label>
+                    <input class="rph-input {% if form.pharmacy_country.errors %}is-error{% endif %}"
+                           type="text" id="id_pharmacy_country" name="pharmacy_country"
+                           value="{{ form.pharmacy_country.value|default:'Gabon' }}"
+                           placeholder="Gabon" />
+                    {% for err in form.pharmacy_country.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                </div>
+                <button type="button" class="rph-geo-btn" id="rphGeoBtn" onclick="rphLocateMe()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+                    <circle cx="12" cy="12" r="8" stroke-dasharray="3 2"/>
+                  </svg>
+                  <span id="rphGeoBtnLabel">Utiliser ma position GPS</span>
+                </button>
+                <div class="rph-map-hint">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  Cliquez sur la carte pour placer votre pharmacie avec précision
+                </div>
+                <div class="rph-map-wrap"><div id="rphMap"></div></div>
+                <div class="rph-latlon">
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_pharmacy_lat">Latitude</label>
+                    <input class="rph-input {% if form.pharmacy_lat.errors %}is-error{% endif %}"
+                           type="number" step="any" id="id_pharmacy_lat" name="pharmacy_lat"
+                           value="{{ form.pharmacy_lat.value|default:'' }}" placeholder="0.3924" />
+                    {% for err in form.pharmacy_lat.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                  <div class="rph-field">
+                    <label class="rph-label" for="id_pharmacy_lng">Longitude</label>
+                    <input class="rph-input {% if form.pharmacy_lng.errors %}is-error{% endif %}"
+                           type="number" step="any" id="id_pharmacy_lng" name="pharmacy_lng"
+                           value="{{ form.pharmacy_lng.value|default:'' }}" placeholder="9.4536" />
+                    {% for err in form.pharmacy_lng.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ÉTAPE 4 : Horaires -->
+            <div class="rph-card">
+              <div class="rph-card-head">
+                <div class="rph-card-head-icon" style="background:var(--navy-pale);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="rph-card-head-title">Horaires d'ouverture</div>
+                  <div class="rph-card-head-sub">Indiquez vos horaires habituels</div>
+                </div>
+                <span class="rph-card-step">04</span>
+              </div>
+              <div class="rph-card-body">
+                <label class="rph-toggle-wrap" id="rph24hWrap" onclick="rphToggle24h()">
+                  <input type="checkbox" id="id_is_open_24h" name="is_open_24h"
+                         {% if form.is_open_24h.value %}checked{% endif %} />
+                  <div class="rph-toggle-switch" id="rph24hSwitch"></div>
+                  <div>
+                    <div class="rph-toggle-label">Ouvert 24h/24, 7j/7</div>
+                    <div class="rph-toggle-sub">La pharmacie ne ferme jamais</div>
+                  </div>
+                </label>
+                <div id="rphHoursWrap">
+                  <div class="rph-row">
+                    <div class="rph-field">
+                      <label class="rph-label" for="id_opening_time">Heure d'ouverture</label>
+                      <input class="rph-input {% if form.opening_time.errors %}is-error{% endif %}"
+                             type="time" id="id_opening_time" name="opening_time"
+                             value="{{ form.opening_time.value|default:'08:00' }}" />
+                      {% for err in form.opening_time.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                    </div>
+                    <div class="rph-field">
+                      <label class="rph-label" for="id_closing_time">Heure de fermeture</label>
+                      <input class="rph-input {% if form.closing_time.errors %}is-error{% endif %}"
+                             type="time" id="id_closing_time" name="closing_time"
+                             value="{{ form.closing_time.value|default:'20:00' }}" />
+                      {% for err in form.closing_time.errors %}<span class="rph-error">{{ err }}</span>{% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="rph-submit-wrap">
+                <button type="submit" class="rph-submit">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  Soumettre ma pharmacie
+                </button>
+                <div class="rph-submit-note">Votre dossier sera examiné sous 24h par notre équipe.</div>
+              </div>
+            </div>
+
+          </div><!-- /colonne principale -->
+
+          <!-- ══ SIDEBAR ══ -->
+          <div class="rph-sidebar">
+            <div class="rph-info-card">
+              <div class="rph-info-card-eyebrow">Comment ça marche</div>
+              <div class="rph-info-card-title">Votre pharmacie en ligne<br /><em>en 24h</em></div>
+              <div class="rph-info-steps">
+                <div class="rph-info-step">
+                  <div class="rph-info-step-num">1</div>
+                  <div class="rph-info-step-text"><strong>Remplissez le formulaire</strong> avec les infos de votre pharmacie.</div>
+                </div>
+                <div class="rph-info-step">
+                  <div class="rph-info-step-num">2</div>
+                  <div class="rph-info-step-text"><strong>Notre équipe vérifie</strong> votre dossier sous 24h ouvrées.</div>
+                </div>
+                <div class="rph-info-step">
+                  <div class="rph-info-step-num">3</div>
+                  <div class="rph-info-step-text"><strong>Gérez votre stock</strong> et recevez des réservations en ligne.</div>
+                </div>
+                <div class="rph-info-step">
+                  <div class="rph-info-step-num">4</div>
+                  <div class="rph-info-step-text"><strong>Augmentez votre visibilité</strong> auprès de milliers de patients.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="rph-help-card">
+              <div class="rph-help-title">Ce que vous obtenez</div>
+              {% for item in form.benefits %}
+              <div class="rph-help-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                {{ item }}
+              </div>
+              {% empty %}{% endfor %}
+            </div>
+
+            <a href="{% url 'auth_user:login_pharmacist' %}"
+               class="btn btn-outline"
+               style="width:100%;justify-content:center;background:white;">
+              Déjà inscrit ? Se connecter →
+            </a>
+          </div>
+
+        </div><!-- /rph-layout -->
+      </form>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  window.rphTogglePw = function (id, btn) {
+    var input = document.getElementById(id);
+    var isText = input.type === 'text';
+    input.type = isText ? 'password' : 'text';
+    btn.style.color = isText ? 'var(--ink-4)' : 'var(--navy)';
+  };
+
+  var is24h = {% if form.is_open_24h.value %}true{% else %}false{% endif %};
+  updateToggleUI();
+
+  window.rphToggle24h = function () {
+    var cb = document.getElementById('id_is_open_24h');
+    cb.checked = !cb.checked;
+    is24h = cb.checked;
+    updateToggleUI();
+  };
+
+  function updateToggleUI() {
+    var wrap  = document.getElementById('rph24hWrap');
+    var hours = document.getElementById('rphHoursWrap');
+    if (is24h) { wrap.classList.add('is-on');    hours.style.display = 'none'; }
+    else        { wrap.classList.remove('is-on'); hours.style.display = 'block'; }
+  }
+
+  window.rphPreviewLogo = function (input) {
+    var preview = document.getElementById('rphLogoPreview');
+    var icon    = document.getElementById('rphUploadIcon');
+    var title   = document.getElementById('rphUploadTitle');
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        icon.style.display    = 'none';
+        title.textContent     = input.files[0].name;
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  };
+
+  var DEFAULT_LAT = 0.3924, DEFAULT_LNG = 9.4536, DEFAULT_ZOOM = 13;
+  var savedLat = parseFloat(document.getElementById('id_pharmacy_lat').value) || DEFAULT_LAT;
+  var savedLng = parseFloat(document.getElementById('id_pharmacy_lng').value) || DEFAULT_LNG;
+  var zoom     = (savedLat !== DEFAULT_LAT) ? 16 : DEFAULT_ZOOM;
+
+  var map = L.map('rphMap', { zoomControl: true, scrollWheelZoom: true })
+              .setView([savedLat, savedLng], zoom);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CartoDB', maxZoom: 19,
+  }).addTo(map);
+
+  var mkIcon = L.divIcon({
+    html: '<div style="background:#0C1F3F;border:3px solid white;border-radius:50%;'
+        + 'width:34px;height:34px;display:flex;align-items:center;justify-content:center;'
+        + 'box-shadow:0 4px 16px rgba(12,31,63,0.35);">'
+        + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none">'
+        + '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="white"/>'
+        + '<circle cx="12" cy="9" r="2.5" fill="#0C1F3F"/></svg></div>',
+    iconSize: [34,34], iconAnchor: [17,34], popupAnchor: [0,-36], className: '',
+  });
+
+  var marker = L.marker([savedLat, savedLng], { icon: mkIcon, draggable: true }).addTo(map);
+  if (savedLat !== DEFAULT_LAT) {
+    marker.bindPopup('<div style="padding:8px 10px;font-family:Syne,sans-serif;font-size:.8rem;font-weight:700;color:#0C1F3F;">Votre pharmacie</div>').openPopup();
+  }
+
+  function syncLatLng(lat, lng) {
+    document.getElementById('id_pharmacy_lat').value = lat.toFixed(6);
+    document.getElementById('id_pharmacy_lng').value = lng.toFixed(6);
+  }
+
+  marker.on('dragend', function (e) { var p = e.target.getLatLng(); syncLatLng(p.lat, p.lng); });
+  map.on('click', function (e) { marker.setLatLng(e.latlng); syncLatLng(e.latlng.lat, e.latlng.lng); });
+
+  ['id_pharmacy_lat', 'id_pharmacy_lng'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', function () {
+      var lat = parseFloat(document.getElementById('id_pharmacy_lat').value);
+      var lng = parseFloat(document.getElementById('id_pharmacy_lng').value);
+      if (!isNaN(lat) && !isNaN(lng)) { marker.setLatLng([lat, lng]); map.setView([lat, lng], 16); }
+    });
+  });
+
+  requestAnimationFrame(function () { requestAnimationFrame(function () { map.invalidateSize(); }); });
+  setTimeout(function () { map.invalidateSize(); }, 400);
+
+  window.rphLocateMe = function () {
+    var btn = document.getElementById('rphGeoBtn');
+    var label = document.getElementById('rphGeoBtnLabel');
+    if (!navigator.geolocation) { alert('Géolocalisation non supportée.'); return; }
+    btn.disabled = true; label.textContent = '…';
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        var lat = pos.coords.latitude, lng = pos.coords.longitude;
+        marker.setLatLng([lat, lng]); map.setView([lat, lng], 17); syncLatLng(lat, lng);
+        btn.disabled = false; btn.classList.add('active'); label.textContent = 'Position GPS active ✓';
+      },
+      function () {
+        btn.disabled = false; label.textContent = 'Utiliser ma position GPS';
+        alert('Impossible de vous localiser. Placez le marqueur manuellement.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+})();
+</script>
+{% endblock %}

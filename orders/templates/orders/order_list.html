@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mes commandes — PharMap{% endblock %}
+
+{% block extra_css %}
+<style>
+.ord-hero {
+  background: var(--navy); padding: 60px 0 44px; position: relative; overflow: hidden;
+}
+.ord-hero-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 50% 70% at 90% 40%, rgba(26,122,94,0.13) 0%, transparent 70%);
+}
+.ord-hero-inner { position: relative; z-index: 1; }
+.ord-title {
+  font-family: 'Fraunces', serif; font-size: clamp(1.8rem,3vw,2.4rem);
+  color: white; font-weight: 300; margin-bottom: 8px;
+}
+.ord-title em { font-style: italic; color: #6EDCBC; }
+
+.ord-filters {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px;
+}
+.ord-filter-btn {
+  font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 700;
+  padding: 6px 16px; border-radius: 999px; border: 1px solid var(--line);
+  background: white; color: var(--ink-3); cursor: pointer; text-decoration: none;
+  transition: var(--t);
+}
+.ord-filter-btn:hover, .ord-filter-btn.active {
+  background: var(--navy); color: white; border-color: var(--navy);
+}
+
+.ord-list { display: flex; flex-direction: column; gap: 14px; }
+.ord-card {
+  background: white; border-radius: var(--r-lg);
+  border: 1px solid var(--line); padding: 24px 28px;
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: center; gap: 20px; transition: var(--t);
+  text-decoration: none; color: inherit;
+}
+.ord-card:hover { box-shadow: var(--sh-1); transform: translateY(-1px); }
+.ord-card-id {
+  font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700;
+  color: var(--ink-4); letter-spacing: 0.08em; margin-bottom: 4px;
+}
+.ord-card-pharmacy {
+  font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700;
+  color: var(--ink); margin-bottom: 4px;
+}
+.ord-card-meta { font-size: 0.8rem; color: var(--ink-4); }
+.ord-card-right { text-align: right; }
+.ord-amount {
+  font-family: 'Fraunces', serif; font-size: 1.3rem;
+  color: var(--navy); font-weight: 300; margin-bottom: 6px;
+}
+.ord-badge {
+  display: inline-block; font-family: 'Syne', sans-serif;
+  font-size: 0.68rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 999px; letter-spacing: 0.04em;
+}
+.badge-PENDING   { background: #fff3cd; color: #856404; }
+.badge-CONFIRMED { background: #cff4fc; color: #055160; }
+.badge-READY     { background: #d1fae5; color: #065f46; }
+.badge-DELIVERED { background: #d4edda; color: #155724; }
+.badge-CANCELLED { background: #f8d7da; color: #721c24; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="ord-hero">
+  <div class="ord-hero-glow"></div>
+  <div class="container">
+    <div class="ord-hero-inner afu">
+      <div class="ord-title">
+        {% if request.user.role == "PHARMACIST" %}
+          Commandes · <em>{{ request.user.pharmacy.name }}</em>
+        {% else %}
+          Mes <em>commandes</em>
+        {% endif %}
+      </div>
+      <p style="color:rgba(255,255,255,0.5);font-size:0.875rem;">
+        {{ orders.count }} commande{{ orders.count|pluralize }}
+      </p>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--sand);padding:48px 0;">
+  <div class="container" style="max-width:860px;">
+
+    <!-- Filtres statut -->
+    <div class="ord-filters afu">
+      <a href="{% url 'orders:order_list' %}"
+         class="ord-filter-btn {% if not active_filter %}active{% endif %}">Toutes</a>
+      {% for value, label in status_list %}
+      <a href="?status={{ value }}"
+         class="ord-filter-btn {% if active_filter == value %}active{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </div>
+
+    {% if orders %}
+    <div class="ord-list">
+      {% for order in orders %}
+      <a href="{% url 'orders:order_detail' order.id %}" class="ord-card afu">
+        <div>
+          <div class="ord-card-id">COMMANDE #{{ order.id }}</div>
+          <div class="ord-card-pharmacy">{{ order.pharmacy.name }}</div>
+          <div class="ord-card-meta">
+            {{ order.items.count }} article{{ order.items.count|pluralize }}
+            &nbsp;·&nbsp; {{ order.created_at|date:"d F Y à H:i" }}
+          </div>
+        </div>
+        <div class="ord-card-right">
+          <div class="ord-amount">{{ order.total_amount }} FCFA</div>
+          <span class="ord-badge badge-{{ order.status }}">{{ order.get_status_display }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="background:white;border-radius:var(--r-xl);border:1px solid var(--line);
+                padding:60px;text-align:center;" class="afu">
+      <div style="font-family:'Fraunces',serif;font-size:1.4rem;color:var(--ink);margin-bottom:10px;">
+        Aucune commande
+      </div>
+      <p class="text-muted">Vous n'avez pas encore passé de commande.</p>
+      <a href="{% url 'pharmacies:pharmacy_list' %}" class="btn btn-primary" style="margin-top:16px;">
+        Trouver une pharmacie →
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}
