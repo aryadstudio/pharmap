@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Modifier mon profil — PharMap{% endblock %}
+{% block meta_description %}Modifiez vos informations personnelles sur PharMap.{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ════════════════════════════════════════
+   PROFILE EDIT — préfixe .pe-
+════════════════════════════════════════ */
+
+.pe-page {
+  min-height: 100vh;
+  background: var(--gray-50);
+  padding: calc(64px + 48px) 0 80px;
+}
+
+.pe-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Card principale ── */
+.pe-card {
+  background: white;
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.pe-header {
+  background: linear-gradient(135deg, var(--blue), var(--blue-bright));
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.pe-header-icon {
+  width: 56px; height: 56px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.pe-header-icon svg { stroke: white; }
+
+.pe-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.5rem;
+  color: white;
+  font-weight: 400;
+  margin-bottom: 6px;
+}
+
+.pe-subtitle {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+}
+
+/* ── Corps du formulaire ── */
+.pe-body {
+  padding: 32px 24px;
+}
+
+.pe-section {
+  margin-bottom: 28px;
+}
+
+.pe-section:last-child {
+  margin-bottom: 0;
+}
+
+.pe-section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--ink-4);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pe-section-title svg {
+  width: 16px; height: 16px;
+  stroke: var(--blue);
+}
+
+/* ── Champs de formulaire ── */
+.pe-field {
+  margin-bottom: 20px;
+}
+
+.pe-field:last-child {
+  margin-bottom: 0;
+}
+
+.pe-label {
+  display: block;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-3);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.pe-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--r-sm);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: white;
+  transition: var(--t);
+  outline: none;
+}
+
+.pe-input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-light);
+}
+
+.pe-input.error {
+  border-color: #DC2626;
+  background: #FEF2F2;
+}
+
+.pe-error-msg {
+  font-size: 0.72rem;
+  color: #DC2626;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pe-hint {
+  font-size: 0.75rem;
+  color: var(--ink-4);
+  margin-top: 6px;
+}
+
+/* ── Upload photo de profil ── */
+.pe-avatar-upload {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: var(--gray-50);
+  border-radius: var(--r);
+  border: 1px dashed var(--gray-300);
+}
+
+.pe-avatar-preview {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: var(--blue-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.pe-avatar-preview img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.pe-avatar-preview span {
+  font-family: 'Fraunces', serif;
+  font-size: 1.8rem;
+  color: var(--blue);
+  font-weight: 300;
+}
+
+.pe-upload-actions {
+  flex: 1;
+}
+
+.pe-upload-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.pe-upload-desc {
+  font-size: 0.75rem;
+  color: var(--ink-4);
+  margin-bottom: 12px;
+}
+
+.pe-file-input {
+  display: none;
+}
+
+.pe-btn-choose {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  background: white;
+  border: 1.5px solid var(--blue);
+  border-radius: var(--r-xs);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--blue);
+  cursor: pointer;
+  transition: var(--t);
+}
+
+.pe-btn-choose:hover {
+  background: var(--blue-light);
+}
+
+.pe-btn-remove {
+  margin-left: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--r-xs);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-4);
+  cursor: pointer;
+  transition: var(--t);
+}
+
+.pe-btn-remove:hover {
+  border-color: #DC2626;
+  color: #DC2626;
+}
+
+/* ── Boutons d'action ── */
+.pe-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.pe-btn-save {
+  flex: 1;
+  padding: 13px 24px;
+  background: linear-gradient(135deg, var(--green), var(--green-bright));
+  color: white;
+  border: none;
+  border-radius: var(--r-sm);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--t);
+  box-shadow: 0 2px 10px rgba(0,200,83,0.25);
+}
+
+.pe-btn-save:hover {
+  background: linear-gradient(135deg, var(--green-2), var(--green));
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,200,83,0.3);
+}
+
+.pe-btn-cancel {
+  padding: 13px 24px;
+  background: white;
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--r-sm);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-decoration: none;
+  transition: var(--t);
+}
+
+.pe-btn-cancel:hover {
+  border-color: var(--ink-4);
+  color: var(--ink);
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .pe-page { padding: calc(64px + 32px) 0 70px; }
+  .pe-container { padding: 0 16px; }
+  .pe-header { padding: 24px 16px; }
+  .pe-body { padding: 24px 16px; }
+  .pe-avatar-upload { flex-direction: column; text-align: center; }
+  .pe-actions { flex-direction: column; }
+  .pe-btn-save, .pe-btn-cancel { width: 100%; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pe-page">
+  <div class="pe-container">
+    <form method="POST" enctype="multipart/form-data" class="pe-card">
+      {% csrf_token %}
+
+      <!-- En-tête -->
+      <div class="pe-header">
+        <div class="pe-header-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <h1 class="pe-title">Modifier mon profil</h1>
+        <p class="pe-subtitle">Mettez à jour vos informations personnelles</p>
+      </div>
+
+      <!-- Corps du formulaire -->
+      <div class="pe-body">
+        
+        <!-- Photo de profil -->
+        <div class="pe-section">
+          <div class="pe-section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            Photo de profil
+          </div>
+          <div class="pe-avatar-upload">
+            <div class="pe-avatar-preview">
+              {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="Photo de profil">
+              {% else %}
+                <span>{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</span>
+              {% endif %}
+            </div>
+            <div class="pe-upload-actions">
+              <div class="pe-upload-title">Ajouter une photo</div>
+              <div class="pe-upload-desc">PNG, JPG jusqu'à 5MB</div>
+              <label class="pe-btn-choose">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Choisir un fichier
+                <input type="file" name="profile_picture" class="pe-file-input" accept="image/*">
+              </label>
+              {% if user.profile_picture %}
+                <button type="button" class="pe-btn-remove" onclick="document.querySelector('input[name=\'profile_picture\']').value = ''">
+                  Supprimer
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations personnelles -->
+        <div class="pe-section">
+          <div class="pe-section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Informations personnelles
+          </div>
+
+          <div class="pe-field">
+            <label class="pe-label" for="first_name">Prénom *</label>
+            <input 
+              type="text" 
+              id="first_name" 
+              name="first_name" 
+              class="pe-input {% if errors.first_name %}error{% endif %}"
+              value="{{ user.first_name|default:'' }}"
+              required
+            >
+            {% if errors.first_name %}
+              <div class="pe-error-msg">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {{ errors.first_name }}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="pe-field">
+            <label class="pe-label" for="last_name">Nom *</label>
+            <input 
+              type="text" 
+              id="last_name" 
+              name="last_name" 
+              class="pe-input {% if errors.last_name %}error{% endif %}"
+              value="{{ user.last_name|default:'' }}"
+              required
+            >
+            {% if errors.last_name %}
+              <div class="pe-error-msg">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {{ errors.last_name }}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="pe-field">
+            <label class="pe-label" for="email">Email *</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              class="pe-input {% if errors.email %}error{% endif %}"
+              value="{{ user.email }}"
+              required
+            >
+            {% if errors.email %}
+              <div class="pe-error-msg">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {{ errors.email }}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="pe-field">
+            <label class="pe-label" for="phone">Téléphone *</label>
+            <input 
+              type="tel" 
+              id="phone" 
+              name="phone" 
+              class="pe-input {% if errors.phone %}error{% endif %}"
+              value="{{ user.phone|default:'' }}"
+              placeholder="+241 XX XX XX XX"
+              required
+            >
+            {% if errors.phone %}
+              <div class="pe-error-msg">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {{ errors.phone }}
+              </div>
+            {% endif %}
+            <div class="pe-hint">Format recommandé : +241 XX XX XX XX</div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="pe-actions">
+          <a href="{% url 'patient:profile' %}" class="pe-btn-cancel">Annuler</a>
+          <button type="submit" class="pe-btn-save">
+            Enregistrer les modifications
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

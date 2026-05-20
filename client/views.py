@@ -55,14 +55,13 @@ def profile(request):
 def profile_edit(request):
     """Modifier les infos personnelles."""
     user = request.user
+    errors = {}
 
     if request.method == "POST":
         first_name = request.POST.get("first_name", "").strip()
         last_name  = request.POST.get("last_name", "").strip()
         phone      = request.POST.get("phone", "").strip()
         email      = request.POST.get("email", "").strip()
-
-        errors = {}
 
         if not first_name:
             errors["first_name"] = "Le prénom est requis."
@@ -77,27 +76,25 @@ def profile_edit(request):
             if User.objects.filter(phone=phone).exclude(pk=user.pk).exists():
                 errors["phone"] = "Ce numéro est déjà utilisé."
 
-        if errors:
-            return render(request, "client/profile_edit.html", {
-                "user": user, "errors": errors,
-                "post": request.POST,
-            })
+        if not errors:
+            user.first_name = first_name
+            user.last_name  = last_name
+            user.phone      = phone
+            if email:
+                user.email = email
 
-        user.first_name = first_name
-        user.last_name  = last_name
-        user.phone      = phone
-        if email:
-            user.email = email
+            # Photo de profil
+            if "profile_picture" in request.FILES:
+                user.profile_picture = request.FILES["profile_picture"]
 
-        # Photo de profil
-        if "profile_picture" in request.FILES:
-            user.profile_picture = request.FILES["profile_picture"]
+            user.save()
+            messages.success(request, "Profil mis à jour avec succès.")
+            return redirect("patient:profile")
 
-        user.save()
-        messages.success(request, "Profil mis à jour avec succès.")
-        return redirect("auth_user:profile")
-
-    return render(request, "client/profile_edit.html", {"user": user, "errors": {}})
+    return render(request, "client/profile_edit.html", {
+        "user": user, 
+        "errors": errors,
+    })
 
 
 @login_required

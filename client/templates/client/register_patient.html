@@ -19,13 +19,13 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: var(--sand);
+  background: var(--gray-50);
 }
 
 /* ── Panneau gauche (visuel) ── */
 .rp-visual {
   position: relative;
-  background: var(--navy);
+  background: var(--blue);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -138,7 +138,7 @@
   font-size: 1.8rem; font-weight: 300;
   color: var(--ink); letter-spacing: -0.8px; line-height: 1.18;
 }
-.rp-form-title em { font-style: italic; color: var(--navy); }
+.rp-form-title em { font-style: italic; color: var(--blue); }
 .rp-form-sub {
   font-size: 0.85rem; color: var(--ink-4);
   line-height: 1.7; margin-top: 8px;
@@ -159,7 +159,7 @@
 }
 .rp-input {
   width: 100%; padding: 12px 14px;
-  background: var(--sand);
+  background: var(--gray-50);
   border: 1.5px solid var(--line-2);
   border-radius: var(--r-sm);
   font-family: 'Inter', sans-serif;
@@ -167,7 +167,7 @@
   outline: none; transition: var(--t); box-sizing: border-box;
 }
 .rp-input:focus {
-  border-color: var(--navy); background: white;
+  border-color: var(--blue); background: white;
   box-shadow: 0 0 0 3px rgba(12,31,63,0.08);
 }
 .rp-input.is-error { border-color: #C53030; background: #FFF5F5; }
@@ -186,12 +186,12 @@
   color: var(--ink-4); padding: 4px;
   display: flex; align-items: center; transition: var(--t);
 }
-.rp-pw-toggle:hover { color: var(--navy); }
+.rp-pw-toggle:hover { color: var(--blue); }
 
 /* Submit */
 .rp-submit {
   width: 100%; padding: 14px;
-  background: var(--navy); color: white;
+  background: var(--blue); color: white;
   border: none; border-radius: var(--r-sm);
   font-family: 'Syne', sans-serif;
   font-size: 0.88rem; font-weight: 700;
@@ -211,14 +211,14 @@
   font-size: 0.82rem; color: var(--ink-4);
 }
 .rp-login-link a {
-  color: var(--navy); font-weight: 600; text-decoration: none;
+  color: var(--blue); font-weight: 600; text-decoration: none;
 }
 .rp-login-link a:hover { text-decoration: underline; }
 
 /* Switch pharmacien */
 .rp-switch-box {
-  background: var(--navy-pale);
-  border: 1px solid var(--navy-tint);
+  background: var(--blue-light);
+  border: 1px solid var(--blue-2);
   border-radius: var(--r);
   padding: 16px 18px;
   display: flex; align-items: center;
@@ -226,10 +226,10 @@
   margin-bottom: 24px; text-decoration: none;
   transition: var(--t);
 }
-.rp-switch-box:hover { background: var(--navy-tint); }
+.rp-switch-box:hover { background: var(--blue-2); }
 .rp-switch-box-text {
   font-family: 'Syne', sans-serif;
-  font-size: 0.78rem; font-weight: 600; color: var(--navy);
+  font-size: 0.78rem; font-weight: 600; color: var(--blue);
 }
 .rp-switch-box-sub {
   font-size: 0.7rem; color: var(--ink-4); margin-top: 2px;
@@ -237,7 +237,7 @@
 }
 .rp-switch-btn {
   padding: 7px 14px;
-  background: var(--navy); color: white;
+  background: var(--blue); color: white;
   border-radius: var(--r-xs);
   font-family: 'Syne', sans-serif;
   font-size: 0.72rem; font-weight: 700;
@@ -456,7 +456,7 @@ function togglePw(id, btn) {
   var input = document.getElementById(id);
   var isText = input.type === 'text';
   input.type = isText ? 'password' : 'text';
-  btn.style.color = isText ? 'var(--ink-4)' : 'var(--navy)';
+  btn.style.color = isText ? 'var(--ink-4)' : 'var(--blue)';
 }
 </script>
 {% endblock %}

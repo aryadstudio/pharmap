@@ -14,7 +14,7 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: var(--sand);
+  background: var(--gray-50);
 }
 
 /* ── Cache la navbar globale — cette page a son propre branding ── */
@@ -24,7 +24,7 @@
 /* ── Panneau gauche (visuel) ── */
 .lp-visual {
   position: relative;
-  background: var(--navy);
+  background: var(--blue);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -124,8 +124,8 @@
 
 /* Switch vers pharmacien */
 .lp-switch-box {
-  background: var(--navy-pale);
-  border: 1px solid var(--navy-tint);
+  background: var(--blue-light);
+  border: 1px solid var(--blue-2);
   border-radius: var(--r);
   padding: 14px 18px;
   display: flex; align-items: center;
@@ -133,17 +133,17 @@
   margin-bottom: 32px; text-decoration: none;
   transition: var(--t);
 }
-.lp-switch-box:hover { background: var(--navy-tint); }
+.lp-switch-box:hover { background: var(--blue-2); }
 .lp-switch-box-text {
   font-family: 'Syne', sans-serif;
-  font-size: 0.78rem; font-weight: 600; color: var(--navy);
+  font-size: 0.78rem; font-weight: 600; color: var(--blue);
 }
 .lp-switch-box-sub {
   font-size: 0.7rem; color: var(--ink-4); margin-top: 2px;
 }
 .lp-switch-btn {
   padding: 6px 13px;
-  background: var(--navy); color: white;
+  background: var(--blue); color: white;
   border-radius: var(--r-xs);
   font-family: 'Syne', sans-serif;
   font-size: 0.72rem; font-weight: 700;
@@ -162,7 +162,7 @@
   font-size: 1.8rem; font-weight: 300;
   color: var(--ink); letter-spacing: -0.8px; line-height: 1.18;
 }
-.lp-title em { font-style: italic; color: var(--navy); }
+.lp-title em { font-style: italic; color: var(--blue); }
 .lp-sub {
   font-size: 0.85rem; color: var(--ink-4);
   line-height: 1.7; margin-top: 8px;
@@ -178,7 +178,7 @@
 }
 .lp-input {
   width: 100%; padding: 12px 14px;
-  background: var(--sand);
+  background: var(--gray-50);
   border: 1.5px solid var(--line-2);
   border-radius: var(--r-sm);
   font-family: 'Inter', sans-serif;
@@ -186,7 +186,7 @@
   outline: none; transition: var(--t); box-sizing: border-box;
 }
 .lp-input:focus {
-  border-color: var(--navy); background: white;
+  border-color: var(--blue); background: white;
   box-shadow: 0 0 0 3px rgba(12,31,63,0.08);
 }
 .lp-input.is-error { border-color: #C53030; background: #FFF5F5; }
@@ -200,7 +200,7 @@
   color: var(--ink-4); padding: 4px;
   display: flex; align-items: center; transition: var(--t);
 }
-.lp-pw-toggle:hover { color: var(--navy); }
+.lp-pw-toggle:hover { color: var(--blue); }
 
 /* Messages */
 .lp-messages { margin-bottom: 20px; }
@@ -221,12 +221,12 @@
   font-size: 0.72rem; font-weight: 600;
   color: var(--ink-4); text-decoration: none; transition: var(--t);
 }
-.lp-forgot a:hover { color: var(--navy); }
+.lp-forgot a:hover { color: var(--blue); }
 
 /* Submit */
 .lp-submit {
   width: 100%; padding: 14px;
-  background: var(--navy); color: white;
+  background: var(--blue); color: white;
   border: none; border-radius: var(--r-sm);
   font-family: 'Syne', sans-serif;
   font-size: 0.88rem; font-weight: 700;
@@ -245,7 +245,7 @@
   font-size: 0.82rem; color: var(--ink-4);
 }
 .lp-register-link a {
-  color: var(--navy); font-weight: 600; text-decoration: none;
+  color: var(--blue); font-weight: 600; text-decoration: none;
 }
 .lp-register-link a:hover { text-decoration: underline; }
 
