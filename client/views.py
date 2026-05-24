@@ -5,11 +5,13 @@ from django.contrib import messages
 from django.db.models import Sum, Count
 from django.db import transaction
 
-# Imports corrigés : Les modèles Review et Prescription sont dans l'app 'pharmacies'
 from auth_user.models import User
 from orders.models import Order
 from pharmacies.models import PharmacyReview, Prescription
-from pharmacies.models import Pharmacy  # Utile si besoin d'accès direct
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from client.models import Cart, CartItem
 
 # ──────────────────────────────────────────────────────────────────
 # Helpers internes
@@ -204,3 +206,184 @@ def profile_prescriptions(request):
     })
     
     return render(request, "client/profile_patient.html", context)
+
+
+# ──────────────────────────────────────────────────────────────────
+# PANIER
+# ──────────────────────────────────────────────────────────────────
+@login_required
+def cart_view(request):
+    """Affiche le panier du patient."""
+    try:
+        cart = Cart.objects.get(patient=request.user)
+        items = cart.items.select_related('medication', 'pharmacy').order_by('-added_at')
+    except Cart.DoesNotExist:
+        cart = None
+        items = []
+    
+    context = {
+        "cart": cart,
+        "items": items,
+        "total_amount": cart.get_total_amount() if cart else 0,
+        "item_count": cart.get_item_count() if cart else 0,
+    }
+    return render(request, "client/cart.html", context)
+
+
+@require_http_methods(["POST"])
+@login_required
+@transaction.atomic
+def cart_add(request):
+    """Ajoute un article au panier (AJAX)."""
+    medication_id = request.POST.get('medication_id')
+    pharmacy_id = request.POST.get('pharmacy_id')
+    quantity = int(request.POST.get('quantity', 1))
+    
+    if not medication_id or not pharmacy_id:
+        return JsonResponse({'success': False, 'error': 'Données invalides'}, status=400)
+    
+    from medications.models import Medication, PharmacyMedication
+    from pharmacies.models import Pharmacy
+    
+    try:
+        medication = Medication.objects.get(id=medication_id)
+        pharmacy = Pharmacy.objects.get(id=pharmacy_id)
+        stock = PharmacyMedication.objects.get(
+            medication=medication,
+            pharmacy=pharmacy,
+            quantity__gt=0,
+            is_available=True
+        )
+    except (Medication.DoesNotExist, Pharmacy.DoesNotExist, PharmacyMedication.DoesNotExist):
+        return JsonResponse({'success': False, 'error': 'Produit non disponible'}, status=404)
+    
+    # Récupérer ou créer le panier
+    cart, _ = Cart.objects.get_or_create(patient=request.user)
+    
+    # Vérifier si l'article existe déjà
+    existing_item = CartItem.objects.filter(
+        cart=cart,
+        medication=medication,
+        pharmacy=pharmacy
+    ).first()
+    
+    if existing_item:
+        # Mettre à jour la quantité
+        new_quantity = existing_item.quantity + quantity
+        # Vérifier le stock max
+        if new_quantity > stock.quantity:
+            return JsonResponse({
+                'success': False, 
+                'error': f'Stock insuffisant. Maximum {stock.quantity} disponible.'
+            }, status=400)
+        existing_item.quantity = new_quantity
+        existing_item.unit_price = stock.price
+        existing_item.save()
+        item = existing_item
+        action = 'updated'
+    else:
+        # Créer nouvel article
+        if quantity > stock.quantity:
+            return JsonResponse({
+                'success': False, 
+                'error': f'Stock insuffisant. Maximum {stock.quantity} disponible.'
+            }, status=400)
+        item = CartItem.objects.create(
+            cart=cart,
+            medication=medication,
+            pharmacy=pharmacy,
+            quantity=quantity,
+            unit_price=stock.price
+        )
+        action = 'created'
+    
+    return JsonResponse({
+        'success': True,
+        'action': action,
+        'item_count': cart.get_item_count(),
+        'total_amount': str(cart.get_total_amount()),
+        'item': {
+            'id': str(item.id),
+            'medication_name': item.medication.name,
+            'pharmacy_name': item.pharmacy.name,
+            'quantity': item.quantity,
+            'unit_price': str(item.unit_price),
+            'subtotal': str(item.subtotal),
+        }
+    })
+
+
+@require_http_methods(["POST"])
+@login_required
+@transaction.atomic
+def cart_update(request, item_id):
+    """Met à jour la quantité d'un article (AJAX)."""
+    try:
+        item = CartItem.objects.get(id=item_id, cart__patient=request.user)
+    except CartItem.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Article non trouvé'}, status=404)
+    
+    action = request.POST.get('action', 'update')
+    
+    if action == 'remove':
+        item.delete()
+        return JsonResponse({
+            'success': True,
+            'action': 'removed',
+            'item_count': item.cart.get_item_count(),
+            'total_amount': str(item.cart.get_total_amount()),
+        })
+    
+    # Update quantity
+    try:
+        quantity = int(request.POST.get('quantity', item.quantity))
+        if quantity < 1:
+            raise ValueError()
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Quantité invalide'}, status=400)
+    
+    # Vérifier le stock
+    from medications.models import PharmacyMedication
+    stock = PharmacyMedication.objects.filter(
+        medication=item.medication,
+        pharmacy=item.pharmacy,
+        quantity__gt=0,
+        is_available=True
+    ).first()
+    
+    if not stock:
+        return JsonResponse({'success': False, 'error': 'Produit plus disponible'}, status=400)
+    
+    if quantity > stock.quantity:
+        return JsonResponse({
+            'success': False, 
+            'error': f'Stock insuffisant. Maximum {stock.quantity} disponible.'
+        }, status=400)
+    
+    item.quantity = quantity
+    item.save()
+    
+    return JsonResponse({
+        'success': True,
+        'action': 'updated',
+        'item_count': item.cart.get_item_count(),
+        'total_amount': str(item.cart.get_total_amount()),
+        'item': {
+            'id': str(item.id),
+            'quantity': item.quantity,
+            'subtotal': str(item.subtotal),
+        }
+    })
+
+
+@require_http_methods(["POST"])
+@login_required
+@transaction.atomic
+def cart_clear(request):
+    """Vide le panier."""
+    try:
+        cart = Cart.objects.get(patient=request.user)
+        cart.clear()
+        return JsonResponse({'success': True, 'message': 'Panier vidé'})
+    except Cart.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Panier non trouvé'}, status=404)

@@ -99,6 +99,16 @@
   background: #22A07C;
   animation: pdOpenPulse 2s ease-in-out infinite;
 }
+
+/* Bouton Ajouter au panier */
+.btn-add-cart:hover {
+    background: var(--green) !important;
+    transform: scale(1.05);
+}
+.btn-add-cart:active {
+    transform: scale(0.95);
+}
+
 @keyframes pdOpenPulse {
   0%,100% { opacity:1; transform:scale(1); }
   50%      { opacity:.5; transform:scale(.75); }
@@ -925,10 +935,28 @@
                         {% endif %}
                       </td>
 
-                      <!-- Prix -->
+                                            <!-- Prix + Action -->
                       <td>
-                        <span class="pd-price">{{ stock.price|floatformat:0 }}</span>
-                        <span class="pd-price-currency">XAF</span>
+                        <div style="display:flex;align-items:center;gap:12px;justify-content:flex-end;">
+                          <div>
+                            <span class="pd-price">{{ stock.price|floatformat:0 }}</span>
+                            <span class="pd-price-currency">XAF</span>
+                          </div>
+                          {% if user.is_authenticated and user.role == 'PATIENT' %}
+                          <button type="button" 
+                                  class="btn-add-cart" 
+                                  onclick="addToCart({{ stock.medication.id }}, {{ pharmacy.id }}, {{ stock.price }})"
+                                  style="background:var(--navy);color:white;border:none;border-radius:var(--r-xs);padding:8px 12px;font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;cursor:pointer;transition:var(--t);"
+                                  data-med-id="{{ stock.medication.id }}"
+                                  data-pha-id="{{ pharmacy.id }}"
+                                  data-price="{{ stock.price }}">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                            </svg>
+                          </button>
+                          {% endif %}
+                        </div>
                       </td>
                     </tr>
                     {% endfor %}
@@ -1299,5 +1327,96 @@
   }
 
 })();
+
+
+
+// ════════════════════════════════════════
+// GESTION DU PANIER
+// ════════════════════════════════════════
+
+function addToCart(medicationId, pharmacyId, price) {
+    const formData = new FormData();
+    formData.append('medication_id', medicationId);
+    formData.append('pharmacy_id', pharmacyId);
+    formData.append('quantity', 1);
+    
+    fetch("{% url 'patient:cart_add' %}", {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Animation feedback
+            showToast('✓ Article ajouté au panier', 'success');
+            updateCartBadge(data.item_count, data.total_amount);
+        } else {
+            showToast('✗ ' + data.error, 'error');
+        }
+    })
+    .catch(err => {
+        console.error('Erreur:', err);
+        showToast('✗ Erreur lors de l\'ajout', 'error');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed; top: 80px; right: 24px; z-index: 99999;
+        background: ${type === 'success' ? 'var(--green)' : type === 'error' ? '#C53030' : 'var(--navy)'};
+        color: white; padding: 12px 20px; border-radius: var(--r);
+        font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 600;
+        box-shadow: var(--sh-3); transform: translateX(400px); transition: transform 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.style.transform = 'translateX(0)', 10);
+    setTimeout(() => {
+        toast.style.transform = 'translateX(400px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function updateCartBadge(count, total) {
+    let badge = document.getElementById('cartBadge');
+    if (!badge) {
+        // Créer le badge s'il n'existe pas (dans la navbar)
+        badge = document.createElement('span');
+        badge.id = 'cartBadge';
+        badge.style.cssText = `
+            position: absolute; top: -8px; right: -8px;
+            background: var(--green); color: white;
+            border-radius: 999px; padding: 2px 6px;
+            font-family: 'Syne', sans-serif; font-size: 0.65rem; font-weight: 700;
+        `;
+        const cartIcon = document.querySelector('.nav-cart-icon');
+        if (cartIcon) {
+            cartIcon.style.position = 'relative';
+            cartIcon.appendChild(badge);
+        }
+    }
+    badge.textContent = count > 0 ? count : '';
+}
 </script>
 {% endblock %}
