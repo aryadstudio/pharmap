@@ -8,10 +8,46 @@
 <style>
 
 /* ════════════════════════════════════════
+   VARIABLES & RESET
+   ════════════════════════════════════════ */
+:root {
+  --navy: #0A2540;
+  --teal: #008080;
+  --green: #2ECC71;
+  --green-pale: rgba(46, 204, 113, 0.1);
+  --green-tint: rgba(46, 204, 113, 0.2);
+  --gold: #F1C40F;
+  --gold-pale: rgba(241, 196, 15, 0.1);
+  --gold-2: #F39C12;
+  --red: #E74C3C;
+  --sand: #F4F6F8;
+  --sand-2: #EBEFF2;
+  --line: #E2E8F0;
+  --line-2: #CBD5E0;
+  --ink: #1A202C;
+  --ink-3: #4A5568;
+  --ink-4: #718096;
+  --ink-5: #A0AEC0;
+  --navy-pale: #EDF2F7;
+  --r: 12px;
+  --r-lg: 16px;
+  --r-sm: 8px;
+  --r-xs: 6px;
+  --t: all 0.3s ease;
+  --sh-3: 0 10px 15px -3px rgba(0,0,0,0.1);
+}
+
+body {
+  background-color: var(--sand);
+  font-family: 'Inter', sans-serif;
+  color: var(--ink);
+  margin: 0;
+  /* Padding top géré par la navbar fixe si elle existe */
+}
+
+/* ════════════════════════════════════════
    HERO PHARMACIE
-   Préfixe : .pd- (pharmacy detail)
-   → aucun conflit avec .pl- .sr- du base
-════════════════════════════════════════ */
+   ════════════════════════════════════════ */
 .pd-hero {
   background: var(--navy);
   padding: 72px 0 0;
@@ -100,15 +136,6 @@
   animation: pdOpenPulse 2s ease-in-out infinite;
 }
 
-/* Bouton Ajouter au panier */
-.btn-add-cart:hover {
-    background: var(--green) !important;
-    transform: scale(1.05);
-}
-.btn-add-cart:active {
-    transform: scale(0.95);
-}
-
 @keyframes pdOpenPulse {
   0%,100% { opacity:1; transform:scale(1); }
   50%      { opacity:.5; transform:scale(.75); }
@@ -177,10 +204,15 @@
 
 /* ════════════════════════════════════════
    LAYOUT PRINCIPAL
-════════════════════════════════════════ */
+   ════════════════════════════════════════ */
 .pd-body {
   background: var(--sand);
   padding: 40px 0 80px;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 .pd-layout {
   display: grid;
@@ -191,12 +223,12 @@
 
 /* ════════════════════════════════════════
    SECTION GÉNÉRIQUES
-════════════════════════════════════════ */
+   ════════════════════════════════════════ */
 .pd-section {
   background: white;
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
-  overflow: hidden;
+  overflow: hidden; /* Garde les coins arrondis */
 }
 .pd-section-head {
   padding: 20px 24px 18px;
@@ -223,7 +255,7 @@
 
 /* ════════════════════════════════════════
    RECHERCHE DANS LES STOCKS
-════════════════════════════════════════ */
+   ════════════════════════════════════════ */
 .pd-stock-search {
   padding: 14px 24px;
   border-bottom: 1px solid var(--line);
@@ -249,17 +281,19 @@
 .pd-stock-field input::placeholder { color: var(--ink-5); }
 
 /* ════════════════════════════════════════
-   TABLEAU STOCKS
-════════════════════════════════════════ */
+   TABLEAU STOCKS (CORRIGÉ SANS CACHER DE COLONNES)
+   ════════════════════════════════════════ */
 .pd-stock-table {
-  width: 100%; border-collapse: collapse;
+  width: 100%; 
+  border-collapse: collapse;
+  table-layout: auto; /* Important : laisse le tableau s'adapter au contenu */
 }
 .pd-stock-table thead tr {
   background: var(--sand);
   border-bottom: 1px solid var(--line);
 }
 .pd-stock-table th {
-  padding: 10px 24px;
+  padding: 10px 16px; /* Réduit légèrement le padding */
   font-family: 'Syne', sans-serif;
   font-size: 0.65rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: 1.2px;
@@ -276,20 +310,13 @@
 .pd-stock-row:hover { background: var(--navy-pale); }
 
 .pd-stock-table td {
-  padding: 14px 24px;
+  padding: 14px 16px;
   vertical-align: middle;
+  font-size: 0.85rem;
 }
 .pd-stock-table td:last-child { text-align: right; }
 
-.pd-stock-med-name {
-  font-family: 'Syne', sans-serif;
-  font-size: 0.86rem; font-weight: 700; color: var(--ink);
-  margin-bottom: 3px;
-}
-.pd-stock-med-cat {
-  font-size: 0.7rem; color: var(--ink-4);
-  display: flex; align-items: center; gap: 4px;
-}
+/* Colonne Image */
 .pd-stock-med-img {
   width: 42px; height: 42px; border-radius: 8px;
   background: var(--sand);
@@ -298,25 +325,73 @@
   display: flex; align-items: center; justify-content: center;
 }
 
+/* Colonne Nom */
+.pd-stock-med-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.86rem; font-weight: 700; color: var(--ink);
+  margin-bottom: 3px;
+  line-height: 1.3;
+}
+.pd-stock-med-cat {
+  font-size: 0.7rem; color: var(--ink-4);
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* Badges de quantité */
 .pd-qty-chip {
   display: inline-flex; align-items: center; gap: 5px;
   font-family: 'Syne', sans-serif;
   font-size: 0.72rem; font-weight: 700;
   padding: 4px 10px; border-radius: 999px;
+  white-space: nowrap;
 }
 .pd-qty-high   { background: var(--green-pale); color: var(--green);  border: 1px solid var(--green-tint); }
 .pd-qty-medium { background: var(--gold-pale);  color: var(--gold);   border: 1px solid #E8D190; }
 .pd-qty-low    { background: #FEF2F2;           color: #C53030;       border: 1px solid #FEB2B2; }
 
+/* Prix */
 .pd-price {
   font-family: 'Fraunces', serif;
   font-size: 1.1rem; font-weight: 700;
   color: var(--navy); line-height: 1;
+  white-space: nowrap;
 }
 .pd-price-currency {
   font-family: 'Inter', sans-serif;
   font-size: 0.65rem; font-weight: 500;
   color: var(--ink-4); margin-left: 2px;
+}
+
+/* Bouton Ajouter au panier */
+.btn-add-cart {
+  background: var(--navy);
+  color: white;
+  border: none;
+  border-radius: var(--r-xs);
+  padding: 8px 12px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--t);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-add-cart:hover {
+  background: var(--green) !important;
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+}
+
+.btn-add-cart:active {
+  transform: scale(0.95);
+}
+
+.btn-add-cart svg {
+  flex-shrink: 0;
 }
 
 /* État vide stocks */
@@ -330,12 +405,12 @@
   margin: 0 auto 14px;
 }
 
-/* Ligne masquée par filtre */
+/* Ligne masquée par filtre (uniquement via JS) */
 .pd-stock-row.pd-hidden { display: none; }
 
 /* ════════════════════════════════════════
    AVIS
-════════════════════════════════════════ */
+   ════════════════════════════════════════ */
 .pd-reviews-list {
   display: flex; flex-direction: column;
   gap: 0;
@@ -383,7 +458,7 @@
 
 /* ════════════════════════════════════════
    SIDEBAR
-════════════════════════════════════════ */
+   ════════════════════════════════════════ */
 .pd-sidebar { display: flex; flex-direction: column; gap: 20px; }
 
 /* ── Carte localisation ── */
@@ -583,7 +658,7 @@
 
 /* ════════════════════════════════════════
    SECTION DESCRIPTION
-════════════════════════════════════════ */
+   ════════════════════════════════════════ */
 .pd-desc-text {
   padding: 22px 24px;
   font-size: 0.9rem; color: var(--ink-3);
@@ -596,37 +671,117 @@
 }
 
 /* ════════════════════════════════════════
-   RESPONSIVE
-════════════════════════════════════════ */
+   RESPONSIVE (OPTIMISÉ SANS CACHER D'INFO)
+   ════════════════════════════════════════ */
+
+/* Tablette et Mobile (< 1020px) */
 @media (max-width: 1020px) {
   .pd-layout      { grid-template-columns: 1fr; }
-  .pd-sidebar     { order: -1; }
+  .pd-sidebar     { order: -1; } /* Sidebar en haut ou bas selon préférence, ici haut */
   .pd-hero-inner  { grid-template-columns: 1fr; }
-  .pd-hero-side   { display: none; }
+  .pd-hero-side   { display: none; } /* Cache la side card du hero car redondante */
+  
+  /* Ajustement tableau : on réduit les paddings et tailles de police */
+  .pd-stock-table th, 
+  .pd-stock-table td {
+    padding: 10px 8px;
+    font-size: 0.75rem;
+  }
+  
+  .pd-stock-med-name {
+    font-size: 0.8rem;
+  }
+  
+  .pd-price {
+    font-size: 0.95rem;
+  }
+  
+  /* Le bouton garde son icône mais réduit le texte si besoin */
+  .btn-add-cart {
+    padding: 6px 10px;
+  }
 }
+
+/* Mobile (< 768px) */
 @media (max-width: 768px) {
   .pd-hero        { padding: 56px 0 0; }
   .pd-hero-name   { font-size: 1.9rem; }
   .pd-hero-actions{ flex-direction: column; }
   .pd-tabs        { overflow-x: auto; scrollbar-width: none; }
   .pd-tabs::-webkit-scrollbar { display: none; }
-  .pd-tab         { padding: 14px 16px; }
-  .pd-stock-table th:nth-child(3),
-  .pd-stock-table td:nth-child(3) { display: none; } /* masque colonne qté sur mobile */
+  .pd-tab         { padding: 14px 16px; font-size: 0.75rem; }
+  
   .pd-body        { padding: 24px 0 60px; }
+  
+  /* Tableau : adaptation fine */
+  .pd-stock-table th {
+    font-size: 0.6rem;
+    padding: 8px 4px;
+  }
+  .pd-stock-table td {
+    padding: 12px 4px;
+    vertical-align: top; /* Permet au texte de passer à la ligne proprement */
+  }
+  
+  /* Image plus petite */
+  .pd-stock-med-img {
+    width: 32px; height: 32px;
+  }
+  
+  /* Nom du médicament peut aller à la ligne */
+  .pd-stock-med-name {
+    white-space: normal;
+    line-height: 1.2;
+    margin-right: 4px;
+  }
+  
+  /* Badges plus compacts */
+  .pd-qty-chip {
+    padding: 2px 6px;
+    font-size: 0.65rem;
+  }
+  
+  .badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
 }
+
+/* Très petit écran (< 480px) */
 @media (max-width: 480px) {
-  .pd-stock-table th:nth-child(2),
-  .pd-stock-table td:nth-child(2) { display: none; } /* masque catégorie */
+  /* Le bouton ne montre que l'icône pour gagner de la place horizontale */
+  .btn-add-cart span {
+    display: none;
+  }
+  .btn-add-cart {
+    padding: 8px;
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+  }
+  
+  .pd-price {
+    font-size: 0.9rem;
+  }
+  
+  /* Ajustement ultime des colonnes pour que tout tienne */
+  .pd-stock-table th, 
+  .pd-stock-table td {
+    padding: 8px 2px;
+    font-size: 0.7rem;
+  }
+  
+  .pd-stock-med-cat {
+    font-size: 0.65rem;
+  }
 }
 </style>
 {% endblock %}
 
-
 {% block content %}
 
 <!-- ════════════════════════════════════════
-     HERO
+     HERO PHARMACIE
 ════════════════════════════════════════ -->
 <section class="pd-hero">
   <div class="pd-hero-glow"></div>
@@ -687,7 +842,9 @@
           </div>
           {% endif %}
           <div class="pd-hero-meta-item">
-            <span style="color:var(--gold-2); font-size:1rem; line-height:1;">★</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--gold-2)" stroke="var(--gold-2)" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
             <strong>{{ pharmacy.average_rating|floatformat:1 }}</strong>
             <span>({{ pharmacy.total_reviews }} avis)</span>
           </div>
@@ -696,7 +853,7 @@
         <!-- Badges -->
         <div class="pd-hero-badges">
           {% if pharmacy.is_verified %}
-            <span class="badge badge-green" style="font-size:.78rem;padding:5px 13px;">
+            <span class="badge badge-green" style="font-size:.78rem;padding:5px 13px; display:inline-flex; align-items:center; gap:6px;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
@@ -709,7 +866,7 @@
               Ouvert 24h/24
             </div>
           {% else %}
-            <span class="badge badge-navy" style="font-size:.78rem;padding:5px 13px;">
+            <span class="badge badge-navy" style="font-size:.78rem;padding:5px 13px; display:inline-flex; align-items:center; gap:6px;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/>
                 <polyline points="12 6 12 12 16 14"/>
@@ -717,7 +874,11 @@
               {{ pharmacy.opening_time|time:"H:i" }} – {{ pharmacy.closing_time|time:"H:i" }}
             </span>
           {% endif %}
-          <span class="badge badge-sand" style="font-size:.78rem;padding:5px 13px;">
+          <span class="badge badge-sand" style="font-size:.78rem;padding:5px 13px; display:inline-flex; align-items:center; gap:6px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
             {{ pharmacy.country }}
           </span>
         </div>
@@ -741,7 +902,11 @@
           </a>
           <a href="{% url 'pharmacies:search' %}" class="btn btn-ghost"
              style="color:rgba(255,255,255,0.5);">
-            ← Retour à la recherche
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Retour
           </a>
         </div>
 
@@ -757,7 +922,11 @@
         <div class="pd-side-divider"></div>
         <div class="pd-side-row">
           <span>Note moyenne</span>
-          <strong>{{ pharmacy.average_rating|floatformat:1 }} ★</strong>
+          <strong>{{ pharmacy.average_rating|floatformat:1 }} 
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--gold-2)" stroke="none" style="display:inline; vertical-align:middle;">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </strong>
         </div>
         <div class="pd-side-row">
           <span>Total avis</span>
@@ -766,7 +935,12 @@
         <div class="pd-side-row">
           <span>Statut</span>
           {% if pharmacy.is_verified %}
-            <strong style="color:#6EDCBC;">✓ Vérifié</strong>
+            <strong style="color:#6EDCBC; display:flex; align-items:center; gap:4px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Vérifié
+            </strong>
           {% else %}
             <strong style="color:rgba(255,255,255,0.4);">En attente</strong>
           {% endif %}
@@ -858,111 +1032,123 @@
             </div>
 
             {% if stocks %}
-              <div style="overflow-x:auto;">
-                <table class="pd-stock-table" id="stockTable">
-                  <thead>
-                    <tr>
-                      <th style="width:44px;"></th>
-                      <th>Médicament</th>
-                      <th>Catégorie</th>
-                      <th>Stock</th>
-                      <th>Ordonnance</th>
-                      <th>Prix</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for stock in stocks %}
-                    <tr class="pd-stock-row" data-name="{{ stock.medication.name|lower }}">
-                      <!-- Icône / image -->
-                      <td>
-                        <div class="pd-stock-med-img">
-                          {% if stock.medication.image %}
-                            <img src="{{ stock.medication.image.url }}"
-                                 alt="{{ stock.medication.name }}"
-                                 style="width:100%;height:100%;object-fit:contain;border-radius:6px;" />
-                          {% else %}
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ink-5)" stroke-width="1.5">
-                              <rect x="10" y="2" width="4" height="20" rx="2"/>
-                              <rect x="2" y="10" width="20" height="4" rx="2"/>
-                            </svg>
-                          {% endif %}
+              <table class="pd-stock-table" id="stockTable">
+                <thead>
+                  <tr>
+                    <th style="width:44px;"></th>
+                    <th>Médicament</th>
+                    <th>Catégorie</th>
+                    <th>Stock</th>
+                    <th>Ordonnance</th>
+                    <th>Prix & Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for stock in stocks %}
+                  <tr class="pd-stock-row" data-name="{{ stock.medication.name|lower }}">
+                    <!-- Icône / image -->
+                    <td>
+                      <div class="pd-stock-med-img">
+                        {% if stock.medication.image %}
+                          <img src="{{ stock.medication.image.url }}"
+                               alt="{{ stock.medication.name }}"
+                               style="width:100%;height:100%;object-fit:contain;border-radius:6px;" />
+                        {% else %}
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ink-5)" stroke-width="1.5">
+                            <rect x="10" y="2" width="4" height="20" rx="2"/>
+                            <rect x="2" y="10" width="20" height="4" rx="2"/>
+                          </svg>
+                        {% endif %}
+                      </div>
+                    </td>
+
+                    <!-- Nom + description courte -->
+                    <td>
+                      <div class="pd-stock-med-name">{{ stock.medication.name }}</div>
+                      {% if stock.medication.manufacturer %}
+                        <div class="pd-stock-med-cat">{{ stock.medication.manufacturer }}</div>
+                      {% endif %}
+                    </td>
+
+                    <!-- Catégorie -->
+                    <td>
+                      {% if stock.medication.category %}
+                        <span class="badge badge-sand">{{ stock.medication.category.name }}</span>
+                      {% else %}
+                        <span style="color:var(--ink-5);font-size:.78rem;">—</span>
+                      {% endif %}
+                    </td>
+
+                    <!-- Quantité -->
+                    <td>
+                      {% if stock.quantity >= 20 %}
+                        <span class="pd-qty-chip pd-qty-high">
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                          {{ stock.quantity }}
+                        </span>
+                      {% elif stock.quantity >= 5 %}
+                        <span class="pd-qty-chip pd-qty-medium">
+                          ≈ {{ stock.quantity }}
+                        </span>
+                      {% else %}
+                        <span class="pd-qty-chip pd-qty-low">
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                          </svg>
+                          {{ stock.quantity }}
+                        </span>
+                      {% endif %}
+                    </td>
+
+                    <!-- Ordonnance -->
+                    <td>
+                      {% if stock.medication.requires_prescription %}
+                        <span class="badge badge-red" style="display:inline-flex; align-items:center; gap:4px;">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                          </svg>
+                          Requise
+                        </span>
+                      {% else %}
+                        <span class="badge badge-green" style="display:inline-flex; align-items:center; gap:4px;">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                          Non
+                        </span>
+                      {% endif %}
+                    </td>
+
+                    <!-- Prix + Action -->
+                    <td>
+                      <div style="display:flex;align-items:center;gap:12px;justify-content:flex-end;">
+                        <div>
+                          <span class="pd-price">{{ stock.price|floatformat:0 }}</span>
+                          <span class="pd-price-currency">XAF</span>
                         </div>
-                      </td>
-
-                      <!-- Nom + description courte -->
-                      <td>
-                        <div class="pd-stock-med-name">{{ stock.medication.name }}</div>
-                        {% if stock.medication.manufacturer %}
-                          <div class="pd-stock-med-cat">{{ stock.medication.manufacturer }}</div>
+                        {% if user.is_authenticated and user.role == 'PATIENT' %}
+                        <button type="button" 
+                                class="btn-add-cart" 
+                                onclick="addToCart({{ stock.medication.id }}, {{ pharmacy.id }}, {{ stock.price }})"
+                                aria-label="Ajouter au panier">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                          </svg>
+                          <span>Ajouter</span>
+                        </button>
                         {% endif %}
-                      </td>
-
-                      <!-- Catégorie -->
-                      <td>
-                        {% if stock.medication.category %}
-                          <span class="badge badge-sand">{{ stock.medication.category.name }}</span>
-                        {% else %}
-                          <span style="color:var(--ink-5);font-size:.78rem;">—</span>
-                        {% endif %}
-                      </td>
-
-                      <!-- Quantité -->
-                      <td>
-                        {% if stock.quantity >= 20 %}
-                          <span class="pd-qty-chip pd-qty-high">
-                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                              <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                            {{ stock.quantity }}
-                          </span>
-                        {% elif stock.quantity >= 5 %}
-                          <span class="pd-qty-chip pd-qty-medium">
-                            ≈ {{ stock.quantity }}
-                          </span>
-                        {% else %}
-                          <span class="pd-qty-chip pd-qty-low">
-                            ⚠ {{ stock.quantity }}
-                          </span>
-                        {% endif %}
-                      </td>
-
-                      <!-- Ordonnance -->
-                      <td>
-                        {% if stock.medication.requires_prescription %}
-                          <span class="badge badge-red">Requise</span>
-                        {% else %}
-                          <span class="badge badge-green">Non</span>
-                        {% endif %}
-                      </td>
-
-                                            <!-- Prix + Action -->
-                      <td>
-                        <div style="display:flex;align-items:center;gap:12px;justify-content:flex-end;">
-                          <div>
-                            <span class="pd-price">{{ stock.price|floatformat:0 }}</span>
-                            <span class="pd-price-currency">XAF</span>
-                          </div>
-                          {% if user.is_authenticated and user.role == 'PATIENT' %}
-                          <button type="button" 
-                                  class="btn-add-cart" 
-                                  onclick="addToCart({{ stock.medication.id }}, {{ pharmacy.id }}, {{ stock.price }})"
-                                  style="background:var(--navy);color:white;border:none;border-radius:var(--r-xs);padding:8px 12px;font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;cursor:pointer;transition:var(--t);"
-                                  data-med-id="{{ stock.medication.id }}"
-                                  data-pha-id="{{ pharmacy.id }}"
-                                  data-price="{{ stock.price }}">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                            </svg>
-                          </button>
-                          {% endif %}
-                        </div>
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
 
               <!-- Message "aucun résultat filtre" -->
               <div id="stockNoResult" style="display:none;" class="pd-stock-empty">
@@ -1053,7 +1239,15 @@
                       <div class="pd-review-stars">
                         {% if review.rating %}
                           {% for i in "12345" %}
-                            {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                            {% if forloop.counter <= review.rating %}
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--gold)" stroke="none">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                              </svg>
+                            {% else %}
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                              </svg>
+                            {% endif %}
                           {% endfor %}
                         {% else %}
                           ★★★★★
@@ -1068,7 +1262,7 @@
               </div>
             {% else %}
               <div class="pd-reviews-empty">
-                <div style="font-size:2.5rem;margin-bottom:10px;">★</div>
+                <div style="font-size:2.5rem;margin-bottom:10px; color:var(--gold);">★</div>
                 <div style="font-family:'Fraunces',serif;font-size:1rem;color:var(--ink);margin-bottom:8px;">
                   Pas encore d'avis
                 </div>
@@ -1118,7 +1312,15 @@
           <div class="pd-rating-stars-row">
             {% for i in "12345" %}
               <span class="pd-rating-star">
-                {% if forloop.counter <= pharmacy.average_rating %}★{% else %}☆{% endif %}
+                {% if forloop.counter <= pharmacy.average_rating %}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--gold)" stroke="none">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                {% else %}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                {% endif %}
               </span>
             {% endfor %}
           </div>
@@ -1126,10 +1328,6 @@
 
           <!-- Barres de progression (distribution estimée) -->
           <div class="pd-rating-bar-wrap">
-            {% for val, pct in sibar %}
-            {% endfor %}
-            <!-- Distribution statique illustrative — à remplacer par données réelles -->
-            {% for bar in sibar2 %}{% endfor %}
             <div class="pd-rating-bar-row">
               <div class="pd-rating-bar-lbl">5</div>
               <div class="pd-rating-bar-track"><div class="pd-rating-bar-fill" style="width:75%;"></div></div>
@@ -1157,7 +1355,7 @@
         <div class="pd-map-card">
           <div class="pd-map-container">
             {% include "components/_map.html" with map_id="detailMap" map_center_json=map_center_json map_zoom=map_zoom map_markers_json=map_markers_json %}
-        </div>
+          </div>
           <div class="pd-map-footer">
             <svg class="pd-map-addr-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
@@ -1328,41 +1526,9 @@
 
 })();
 
-
-
 // ════════════════════════════════════════
 // GESTION DU PANIER
 // ════════════════════════════════════════
-
-function addToCart(medicationId, pharmacyId, price) {
-    const formData = new FormData();
-    formData.append('medication_id', medicationId);
-    formData.append('pharmacy_id', pharmacyId);
-    formData.append('quantity', 1);
-    
-    fetch("{% url 'patient:cart_add' %}", {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Animation feedback
-            showToast('✓ Article ajouté au panier', 'success');
-            updateCartBadge(data.item_count, data.total_amount);
-        } else {
-            showToast('✗ ' + data.error, 'error');
-        }
-    })
-    .catch(err => {
-        console.error('Erreur:', err);
-        showToast('✗ Erreur lors de l\'ajout', 'error');
-    });
-}
 
 function getCookie(name) {
     let cookieValue = null;
@@ -1417,6 +1583,35 @@ function updateCartBadge(count, total) {
         }
     }
     badge.textContent = count > 0 ? count : '';
+}
+
+function addToCart(medicationId, pharmacyId, price) {
+    const formData = new FormData();
+    formData.append('medication_id', medicationId);
+    formData.append('pharmacy_id', pharmacyId);
+    formData.append('quantity', 1);
+    
+    fetch("{% url 'patient:cart_add' %}", {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✓ Article ajouté au panier', 'success');
+            updateCartBadge(data.item_count, data.total_amount);
+        } else {
+            showToast('✗ ' + data.error, 'error');
+        }
+    })
+    .catch(err => {
+        console.error('Erreur:', err);
+        showToast('✗ Erreur lors de l\'ajout', 'error');
+    });
 }
 </script>
 {% endblock %}

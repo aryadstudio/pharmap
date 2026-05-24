@@ -1,0 +1,676 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mon Panier — PharMap{% endblock %}
+{% block meta_description %}Gérez vos médicaments avant de commander.{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ════════════════════════════════════════
+     VARIABLES LOCALES & HÉRITAGE
+     ════════════════════════════════════════ */
+  :root {
+    /* On réutilise les variables globales si elles ne sont pas déjà chargées via base.html */
+    /* Ces valeurs sont des fallbacks au cas où */
+    --navy: #0C1F3F;
+    --green: #1A7A5E;
+    --green-2: #22A07C;
+    --sand: #F7F4EE;
+    --ink: #0F1923;
+    --ink-3: #4A5568;
+    --ink-4: #718096;
+    --line: rgba(12,31,63,0.07);
+    --r: 16px;
+    --r-lg: 24px;
+    --sh-2: 0 4px 20px rgba(12,31,63,0.09);
+  }
+
+  body {
+    background-color: var(--sand);
+    padding-top: 64px; /* Espace navbar */
+    padding-bottom: 80px; /* Espace bottom nav mobile */
+    font-family: 'Inter', sans-serif;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* ════════════════════════════════════════
+     EN-TÊTE PANIER
+     ════════════════════════════════════════ */
+  .cart-header {
+    padding: 40px 0 30px;
+    text-align: center;
+  }
+  .cart-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    color: var(--navy);
+    margin: 0 0 10px 0;
+    letter-spacing: -0.5px;
+  }
+  .cart-subtitle {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink-4);
+    font-weight: 500;
+  }
+
+  /* ════════════════════════════════════════
+     LAYOUT GRID
+     ════════════════════════════════════════ */
+  .cart-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 28px;
+    align-items: flex-start;
+  }
+
+  /* ════════════════════════════════════════
+     LISTE DES ARTICLES (GROUPÉS PAR PHARMACIE)
+     ════════════════════════════════════════ */
+  .pharmacy-group {
+    background: white;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  }
+
+  .pharmacy-header {
+    background: var(--navy);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+  }
+  .pharmacy-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pharmacy-name svg { opacity: 0.8; }
+  .pharmacy-count {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    font-weight: 500;
+  }
+
+  .cart-item-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto auto;
+    gap: 20px;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--line);
+    transition: background 0.2s;
+  }
+  .cart-item-row:last-child { border-bottom: none; }
+  .cart-item-row:hover { background: var(--sand); }
+
+  /* Image Produit */
+  .item-image {
+    width: 80px;
+    height: 80px;
+    background: var(--sand);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .item-image img {
+    width: 100%; height: 100%; object-fit: contain;
+  }
+  .item-image svg {
+    width: 32px; height: 32px; stroke: var(--ink-4); opacity: 0.5;
+  }
+
+  /* Infos Produit */
+  .item-details h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0 0 4px 0;
+  }
+  .item-meta {
+    font-size: 0.8rem;
+    color: var(--ink-4);
+    line-height: 1.4;
+  }
+  .item-meta span {
+    display: inline-block;
+    margin-right: 8px;
+    background: var(--sand);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  /* Quantité */
+  .item-qty-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 4px;
+  }
+  .qty-btn {
+    width: 28px; height: 28px;
+    border: none;
+    background: var(--sand);
+    color: var(--navy);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .qty-btn:hover { background: var(--navy); color: white; }
+  .qty-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  /* Prix & Actions */
+  .item-actions {
+    text-align: right;
+    min-width: 100px;
+  }
+  .item-price {
+    display: block;
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .item-remove {
+    font-size: 0.75rem;
+    color: #C53030;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    text-decoration: underline;
+    padding: 0;
+    transition: opacity 0.2s;
+  }
+  .item-remove:hover { opacity: 0.7; }
+
+  /* ════════════════════════════════════════
+     RÉCAPITULATIF (SIDEBAR)
+     ════════════════════════════════════════ */
+  .cart-summary {
+    background: white;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line);
+    padding: 24px;
+    position: sticky;
+    top: 90px;
+    box-shadow: var(--sh-2);
+  }
+  .summary-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.3rem;
+    color: var(--navy);
+    margin: 0 0 20px 0;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 16px;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    color: var(--ink-3);
+  }
+  .summary-row.total {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px dashed var(--line);
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    color: var(--navy);
+  }
+  .summary-row span:last-child {
+    font-weight: 600;
+  }
+  
+  .btn-checkout {
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: var(--r);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-checkout:hover {
+    background: var(--green-2);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26,122,94,0.3);
+  }
+  .btn-checkout:disabled {
+    background: var(--ink-4);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-clear-cart {
+    width: 100%;
+    margin-top: 12px;
+    background: transparent;
+    color: var(--ink-4);
+    border: 1px solid var(--line);
+    padding: 10px;
+    border-radius: var(--r-sm);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-clear-cart:hover {
+    border-color: #C53030;
+    color: #C53030;
+    background: #FEF2F2;
+  }
+
+  /* État vide */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line);
+  }
+  .empty-icon {
+    width: 64px; height: 64px;
+    background: var(--sand);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    color: var(--ink-4);
+  }
+  .empty-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    color: var(--navy);
+    margin-bottom: 10px;
+  }
+  .empty-text {
+    color: var(--ink-4);
+    margin-bottom: 24px;
+    font-size: 0.95rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .cart-layout { grid-template-columns: 1fr; }
+    .cart-summary { position: static; order: 2; }
+    .pharmacy-group { order: 1; }
+  }
+  @media (max-width: 600px) {
+    .cart-item-row {
+      grid-template-columns: 60px 1fr;
+      grid-template-rows: auto auto;
+      gap: 12px;
+    }
+    .item-image { width: 60px; height: 60px; }
+    .item-qty-control { grid-column: 1 / -1; justify-content: center; }
+    .item-actions { 
+      grid-column: 1 / -1; 
+      text-align: center; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      gap: 8px;
+    }
+    .item-price { margin-bottom: 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+  
+  <!-- Header -->
+  <header class="cart-header">
+    <h1 class="cart-title">Mon Panier</h1>
+    <p class="cart-subtitle">
+      {% if items %}
+        {{ item_count }} article{{ item_count|pluralize }} dans votre panier
+      {% else %}
+        Votre panier est vide
+      {% endif %}
+    </p>
+  </header>
+
+  {% if items %}
+    
+    <div class="cart-layout">
+      
+      <!-- Colonne Gauche : Liste des articles groupés par pharmacie -->
+      <div class="cart-list">
+        
+        {% regroup items by pharmacy as pharmacy_groups %}
+        
+        {% for group in pharmacy_groups %}
+          <div class="pharmacy-group">
+            <!-- En-tête Pharmacie -->
+            <div class="pharmacy-header">
+              <div class="pharmacy-name">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
+                  <path d="M3 9l2-5h14l2 5"/>
+                  <line x1="12" y1="9" x2="12" y2="20"/>
+                  <line x1="3" y1="14" x2="21" y2="14"/>
+                </svg>
+                {{ group.grouper.name }}
+              </div>
+              <div class="pharmacy-count">{{ group.list|length }} article{{ group.list|length|pluralize }}</div>
+            </div>
+
+            <!-- Articles de cette pharmacie -->
+            {% for item in group.list %}
+              <div class="cart-item-row" data-item-id="{{ item.id }}">
+                <!-- Image -->
+                <div class="item-image">
+                  {% if item.medication.image %}
+                    <img src="{{ item.medication.image.url }}" alt="{{ item.medication.name }}">
+                  {% else %}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <rect x="10" y="2" width="4" height="20" rx="2"/>
+                      <rect x="2" y="10" width="20" height="4" rx="2"/>
+                    </svg>
+                  {% endif %}
+                </div>
+
+                <!-- Détails -->
+                <div class="item-details">
+                  <h3>{{ item.medication.name }}</h3>
+                  <div class="item-meta">
+                    {% if item.medication.form %}<span>{{ item.medication.form }}</span>{% endif %}
+                    {% if item.medication.dosage %}<span>{{ item.medication.dosage }}</span>{% endif %}
+                    {% if item.medication.requires_prescription %}
+                      <span style="color:#C53030; background:#FEF2F2;">Ordonnance requise</span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Contrôle Quantité -->
+                <div class="item-qty-control">
+                  <button class="qty-btn" onclick="updateQuantity('{{ item.id }}', -1)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                  <span class="qty-val" id="qty-{{ item.id }}">{{ item.quantity }}</span>
+                  <button class="qty-btn" onclick="updateQuantity('{{ item.id }}', 1)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                </div>
+
+                <!-- Prix & Suppression -->
+                <div class="item-actions">
+                  <span class="item-price">{{ item.subtotal|floatformat:0 }} <small style="font-size:0.7em; font-family:'Inter'; color:var(--ink-4);">XAF</small></span>
+                  <button class="item-remove" onclick="removeItem('{{ item.id }}')">
+                    Retirer
+                  </button>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+
+      </div>
+
+      <!-- Colonne Droite : Résumé -->
+      <aside class="cart-summary">
+        <h2 class="summary-title">Résumé</h2>
+        
+        <div class="summary-row">
+          <span>Sous-total</span>
+          <span id="summary-subtotal">{{ total_amount|floatformat:0 }} XAF</span>
+        </div>
+        <div class="summary-row">
+          <span>Frais de livraison</span>
+          <span style="color:var(--green);">Calculés à l'étape suivante</span>
+        </div>
+        
+        <div class="summary-row total">
+          <span>Total estimé</span>
+          <span id="summary-total">{{ total_amount|floatformat:0 }} XAF</span>
+        </div>
+
+        <button class="btn-checkout" onclick="alert('Fonctionnalité de commande à implémenter')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Commander maintenant
+        </button>
+
+        <button class="btn-clear-cart" onclick="clearCart()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle; margin-right:4px;">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          Vider le panier
+        </button>
+        
+        <div style="margin-top:20px; text-align:center;">
+          <a href="{% url 'pharmacies:search' %}" style="font-size:0.85rem; color:var(--green); text-decoration:none; font-weight:600; font-family:'Syne',sans-serif;">
+            ← Continuer mes achats
+          </a>
+        </div>
+      </aside>
+
+    </div>
+
+  {% else %}
+    
+    <!-- État Vide -->
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="9" cy="21" r="1"/>
+          <circle cx="20" cy="21" r="1"/>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+        </svg>
+      </div>
+      <h2 class="empty-title">Votre panier est vide</h2>
+      <p class="empty-text">Vous n'avez ajouté aucun médicament pour le moment.</p>
+      <a href="{% url 'pharmacies:search' %}" class="btn btn-primary" style="background:var(--navy); color:white; padding:12px 24px; border-radius:var(--r); text-decoration:none; font-family:'Syne',sans-serif; font-weight:600;">
+        Trouver une pharmacie
+      </a>
+    </div>
+
+  {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function updateQuantity(itemId, change) {
+    const qtyElement = document.getElementById(`qty-${itemId}`);
+    let currentQty = parseInt(qtyElement.textContent);
+    let newQty = currentQty + change;
+
+    if (newQty < 1) {
+      if(confirm('Supprimer cet article du panier ?')) {
+        removeItem(itemId);
+      }
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('action', 'update');
+    formData.append('quantity', newQty);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+    fetch(`/client/cart/update/${itemId}/`, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        qtyElement.textContent = newQty;
+        updateSummary(data.total_amount, data.item_count);
+        // Mettre à jour le prix ligne si nécessaire (optionnel, ici on recalculerait le subtotal)
+        showToast('Panier mis à jour', 'success');
+      } else {
+        showToast(data.error || 'Erreur mise à jour', 'error');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      showToast('Erreur technique', 'error');
+    });
+  }
+
+  function removeItem(itemId) {
+    const row = document.querySelector(`[data-item-id="${itemId}"]`);
+    if(row) row.style.opacity = '0.5';
+
+    const formData = new FormData();
+    formData.append('action', 'remove');
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+    fetch(`/client/cart/update/${itemId}/`, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        if (row) row.remove();
+        updateSummary(data.total_amount, data.item_count);
+        
+        // Vérifier si le groupe est vide
+        const group = row?.parentElement;
+        if (group && group.querySelectorAll('.cart-item-row').length === 0) {
+           group.remove();
+           location.reload(); // Reload simple si plus rien
+        }
+        showToast('Article retiré', 'success');
+      } else {
+        if(row) row.style.opacity = '1';
+        showToast(data.error, 'error');
+      }
+    })
+    .catch(err => {
+      if(row) row.style.opacity = '1';
+      showToast('Erreur technique', 'error');
+    });
+  }
+
+  function clearCart() {
+    if(!confirm('Êtes-vous sûr de vouloir vider tout le panier ?')) return;
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+    fetch('/client/cart/clear/', {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        showToast('Erreur lors du vidage', 'error');
+      }
+    });
+  }
+
+  function updateSummary(total, count) {
+    document.getElementById('summary-subtotal').textContent = Math.round(total) + ' XAF';
+    document.getElementById('summary-total').textContent = Math.round(total) + ' XAF';
+    
+    // Mise à jour badge navbar si présent
+    const badge = document.getElementById('cartBadge');
+    const badgeMobile = document.getElementById('cartBadgeMobile');
+    if(badge) {
+      badge.textContent = count > 0 ? count : '';
+      badge.style.display = count > 0 ? 'block' : 'none';
+    }
+    if(badgeMobile) {
+      badgeMobile.textContent = count > 0 ? count : '';
+      badgeMobile.style.display = count > 0 ? 'block' : 'none';
+    }
+  }
+
+  function showToast(message, type = 'info') {
+    // Réutilisation du système de toast global ou création temporaire
+    const container = document.getElementById('toastContainer') || document.body;
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: ${type === 'success' ? 'var(--green)' : '#C53030'};
+      color: white; padding: 12px 24px; border-radius: 12px;
+      font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.9rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 9999;
+      animation: slideUp 0.3s ease forwards;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
+  }
+</script>
+{% endblock %}
