@@ -6,7 +6,6 @@
 
 {% block extra_css %}
 <style>
-
 /* ════════════════════════════════════════
    HERO
 ════════════════════════════════════════ */
@@ -282,34 +281,25 @@
   flex-wrap: wrap; gap: 16px; margin-bottom: 36px;
 }
 
-/*
-  FIX CRITIQUE : on retire overflow:hidden du wrapper
-  car il coupe les popups et les tuiles Leaflet.
-  On utilise border-radius sur un pseudo-élément ou on
-  accepte que les coins soient légèrement carrés.
-  Alternative propre : clip-path sur le wrapper.
-*/
 .pl-map-wrap {
   border-radius: var(--r-lg);
-  /* FIX: pas d'overflow:hidden → les popups ne sont plus coupés */
-  overflow: visible;
+  overflow: visible; /* FIX: permet aux popups de dépasser */
   box-shadow: var(--sh-2);
   height: 500px;
   border: 1px solid var(--line);
-  position: relative; /* nécessaire pour que #listMap se positionne bien */
+  position: relative;
 }
 
-/* FIX : Le div Leaflet doit être absolu et couvrir tout le wrapper */
 #listMap {
   position: absolute;
   inset: 0;
   height: 100% !important;
   width: 100% !important;
-  border-radius: var(--r-lg); /* reproduit le radius sur la carte elle-même */
+  border-radius: var(--r-lg);
   z-index: 1;
 }
 
-/* Surcharge Leaflet : popups au dessus de tout */
+/* Surcharge Leaflet */
 .leaflet-pane { z-index: 400 !important; }
 .leaflet-top, .leaflet-bottom { z-index: 1000 !important; }
 .leaflet-popup { z-index: 9000 !important; }
@@ -408,7 +398,6 @@
 </style>
 {% endblock %}
 
-
 {% block content %}
 
 <!-- ══════════════════════════════════════════
@@ -445,7 +434,6 @@
     </div>
   </div>
 </section>
-
 
 <!-- ══════════════════════════════════════════
      FILTRES
@@ -522,7 +510,6 @@
     </form>
   </div>
 </div>
-
 
 <!-- ══════════════════════════════════════════
      GRILLE PHARMACIES
@@ -631,11 +618,9 @@
   </div>
 </section>
 
-
 <!-- ══════════════════════════════════════════
      CARTE
 ══════════════════════════════════════════ -->
-<!-- CARTE -->
 <section class="pl-map-section">
   <div class="container">
     <div class="pl-map-header">

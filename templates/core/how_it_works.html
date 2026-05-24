@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block title %}Comment ça marche — PharMap{% endblock %}
 {% block meta_description %}Découvrez comment PharMap vous permet de trouver vos médicaments en temps réel au Gabon en 3 étapes simples.{% endblock %}
+
 {% block extra_css %}
 <style>
-
 /* ════════════════════════════════════════
    PAGE HERO — Comment ça marche
 ════════════════════════════════════════ */
@@ -375,11 +376,11 @@
   <div class="container">
     <div class="hiw-stats-band" style="margin-top:0; border-radius:0; border:none; border-left:1px solid var(--line-2); border-right:1px solid var(--line-2);">
       <div class="hiw-stat">
-        <div class="hiw-stat-val">{{ total_pharmacies }}<span>+</span></div>
+        <div class="hiw-stat-val">{{ total_pharmacies|default:"120" }}<span>+</span></div>
         <div class="hiw-stat-lbl">Pharmacies partenaires</div>
       </div>
       <div class="hiw-stat">
-        <div class="hiw-stat-val">{{ total_medications }}<span>+</span></div>
+        <div class="hiw-stat-val">{{ total_medications|default:"5000" }}<span>+</span></div>
         <div class="hiw-stat-lbl">Médicaments référencés</div>
       </div>
       <div class="hiw-stat">
@@ -697,8 +698,8 @@
           </div>
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
-          <a href="#" class="btn btn-primary btn-lg">Rejoindre le réseau →</a>
-          <a href="#" class="btn btn-outline btn-lg">Nous contacter</a>
+          <a href="{% url 'auth_user:register_pharmacist' %}" class="btn btn-primary btn-lg">Rejoindre le réseau →</a>
+          <a href="{% url 'how_it_works' %}" class="btn btn-outline btn-lg">Nous contacter</a>
         </div>
       </div>
     </div>

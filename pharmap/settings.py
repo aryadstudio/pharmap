@@ -41,8 +41,6 @@ INSTALLED_APPS = [
     "pharmacies",
     "medications",
     "orders",
-    "prescriptions",
-    "reviews",
     "chats",
     "client",
     "payments",

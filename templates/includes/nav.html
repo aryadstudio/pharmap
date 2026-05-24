@@ -1,7 +1,6 @@
 {% load static %}
 
 <nav class="navbar" id="mainNavbar">
-
   <!-- Logo -->
   <a href="{% url 'home' %}" class="navbar-logo">
     <div class="logo-mark">
@@ -10,40 +9,26 @@
     <span class="logo-text">Phar<em>Map</em></span>
   </a>
 
-  <!-- Liens principaux (masqués sur mobile) -->
+  <!-- Liens principaux (Desktop) -->
   <ul class="navbar-nav">
     <li>
-      <a href="{% url 'home' %}"
-         class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-        Accueil
-      </a>
+      <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Accueil</a>
     </li>
     <li>
-      <a href="{% url 'pharmacies:search' %}"
-         class="{% if request.resolver_match.url_name == 'search' %}active{% endif %}">
-        Recherche
-      </a>
+      <a href="{% url 'pharmacies:search' %}" class="{% if request.resolver_match.url_name == 'search' %}active{% endif %}">Recherche</a>
     </li>
     <li>
-      <a href="{% url 'pharmacies:pharmacy_list' %}"
-         class="{% if 'pharmacy' in request.resolver_match.url_name|default:'' %}active{% endif %}">
-        Pharmacies
-      </a>
+      <a href="{% url 'pharmacies:pharmacy_list' %}" class="{% if 'pharmacy' in request.resolver_match.url_name|default:'' %}active{% endif %}">Pharmacies</a>
     </li>
     <li>
-      <a href="{% url 'how_it_works' %}"
-         class="{% if request.resolver_match.url_name == 'how_it_works' %}active{% endif %}">
-        Comment ça marche
-      </a>
+      <a href="{% url 'how_it_works' %}" class="{% if request.resolver_match.url_name == 'how_it_works' %}active{% endif %}">Comment ça marche</a>
     </li>
   </ul>
 
-  <!-- Actions (masquées sur mobile) -->
+  <!-- Actions (Desktop) -->
   <div class="navbar-actions">
     {% if user.is_authenticated %}
-
       {% if user.role == 'PHARMACIST' or user.role == 'ADMIN' %}
-        {# ── Pharmacien connecté ── #}
         <a href="{% url 'pharmacist:dashboard' %}" class="btn btn-ghost btn-sm">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="7" height="7"/>
@@ -53,12 +38,8 @@
           </svg>
           Dashboard
         </a>
-        <a href="{% url 'auth_user:logout' %}" class="btn btn-outline btn-sm">
-          Déconnexion
-        </a>
-
+        <a href="{% url 'auth_user:logout' %}" class="btn btn-outline btn-sm">Déconnexion</a>
       {% else %}
-        {# ── Patient connecté ── #}
         <a href="{% url 'patient:profile' %}" class="btn btn-ghost btn-sm">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="8" r="4"/>
@@ -66,36 +47,20 @@
           </svg>
           {{ user.first_name|default:user.username }}
         </a>
-        <a href="{% url 'orders:order_list' %}" class="btn btn-outline btn-sm">
-          Mes commandes
-        </a>
-
+        <a href="{% url 'orders:order_list' %}" class="btn btn-outline btn-sm">Mes commandes</a>
       {% endif %}
-
     {% else %}
-      {# ── Non connecté ── #}
-      <a href="{% url 'auth_user:login_pharmacist' %}"
-         class="btn btn-ghost btn-sm"
-         style="color:var(--ink-4);font-size:0.78rem;">
-        Espace pro
-      </a>
-      <a href="{% url 'auth_user:login' %}" class="btn btn-ghost btn-sm">
-        Connexion
-      </a>
-      <a href="{% url 'auth_user:register' %}" class="btn btn-primary btn-sm">
-        S'inscrire
-      </a>
+      <a href="{% url 'auth_user:login_pharmacist' %}" class="btn btn-ghost btn-sm" style="color:var(--ink-4);font-size:0.78rem;">Espace pro</a>
+      <a href="{% url 'auth_user:login' %}" class="btn btn-ghost btn-sm">Connexion</a>
+      <a href="{% url 'auth_user:register' %}" class="btn btn-primary btn-sm">S'inscrire</a>
     {% endif %}
   </div>
-
 </nav>
 
-<!-- ══ NAVIGATION MOBILE (bottom nav) ══ -->
+<!-- Navigation Mobile (Bottom) -->
 <nav class="bottom-nav" aria-label="Navigation principale mobile">
   <div class="bottom-nav-items">
-
-    <a href="{% url 'home' %}"
-       class="bottom-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+    <a href="{% url 'home' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
       <div class="bnav-pip">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -105,8 +70,7 @@
       Accueil
     </a>
 
-    <a href="{% url 'pharmacies:search' %}"
-       class="bottom-nav-item {% if request.resolver_match.url_name == 'search' %}active{% endif %}">
+    <a href="{% url 'pharmacies:search' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'search' %}active{% endif %}">
       <div class="bnav-pip">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <circle cx="11" cy="11" r="8"/>
@@ -116,8 +80,7 @@
       Recherche
     </a>
 
-    <a href="{% url 'pharmacies:pharmacy_list' %}"
-       class="bottom-nav-item {% if 'pharmacy' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+    <a href="{% url 'pharmacies:pharmacy_list' %}" class="bottom-nav-item {% if 'pharmacy' in request.resolver_match.url_name|default:'' %}active{% endif %}">
       <div class="bnav-pip">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M3 9h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/>
@@ -130,10 +93,8 @@
     </a>
 
     {% if user.is_authenticated %}
-
       {% if user.role == 'PHARMACIST' or user.role == 'ADMIN' %}
-        <a href="{% url 'pharmacist:dashboard' %}"
-           class="bottom-nav-item {% if 'dashboard' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+        <a href="{% url 'pharmacist:dashboard' %}" class="bottom-nav-item {% if 'dashboard' in request.resolver_match.url_name|default:'' %}active{% endif %}">
           <div class="bnav-pip">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <rect x="3" y="3" width="7" height="7"/>
@@ -145,8 +106,7 @@
           Dashboard
         </a>
       {% else %}
-        <a href="{% url 'patient:profile' %}"
-           class="bottom-nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <a href="{% url 'patient:profile' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
           <div class="bnav-pip">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <circle cx="12" cy="8" r="4"/>
@@ -156,10 +116,8 @@
           Profil
         </a>
       {% endif %}
-
     {% else %}
-      <a href="{% url 'auth_user:login' %}"
-         class="bottom-nav-item {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+      <a href="{% url 'auth_user:login' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
         <div class="bnav-pip">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
@@ -170,16 +128,14 @@
         Connexion
       </a>
     {% endif %}
-
   </div>
 </nav>
 
-<!-- ══ MESSAGES DJANGO → TOASTS ══ -->
+<!-- Messages Django (Toasts) -->
 {% if messages %}
   <div class="toast-container" id="toastContainer">
     {% for message in messages %}
-      <div class="toast"
-           style="background:{% if 'error' in message.tags %}#C53030{% elif 'success' in message.tags %}var(--green){% else %}var(--ink){% endif %};">
+      <div class="toast" style="background:{% if 'error' in message.tags %}#C53030{% elif 'success' in message.tags %}var(--green){% else %}var(--ink){% endif %};">
         {{ message }}
       </div>
     {% endfor %}
@@ -196,7 +152,7 @@
   </script>
 {% endif %}
 
-<!-- ══ NAVBAR SCROLL EFFECT ══ -->
+<!-- Script Scroll Navbar -->
 <script>
 (function () {
   var nav = document.getElementById('mainNavbar');

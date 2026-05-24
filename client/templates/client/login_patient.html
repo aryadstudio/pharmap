@@ -7,9 +7,8 @@
 {% block extra_css %}
 <style>
 /* ════════════════════════════════════
-   LOGIN PATIENT — préfixe .lp-
+   LOGIN PATIENT (.lp-)
 ════════════════════════════════════ */
-
 .lp-page {
   min-height: 100vh;
   display: grid;
@@ -17,11 +16,10 @@
   background: var(--sand);
 }
 
-/* ── Cache la navbar globale — cette page a son propre branding ── */
-#mainNavbar,
-.bottom-nav { display: none !important; }
+/* Cache navbar globale */
+#mainNavbar, .bottom-nav { display: none !important; }
 
-/* ── Panneau gauche (visuel) ── */
+/* Panneau gauche (visuel) */
 .lp-visual {
   position: relative;
   background: var(--navy);
@@ -30,7 +28,6 @@
   flex-direction: column;
   justify-content: flex-end;
   padding: 56px;
-  min-height: 100vh;
 }
 .lp-visual-bg {
   position: absolute; inset: 0;
@@ -110,7 +107,7 @@
   text-transform: uppercase; letter-spacing: 0.8px;
 }
 
-/* ── Panneau droit (formulaire) ── */
+/* Panneau droit (formulaire) */
 .lp-form-panel {
   display: flex;
   flex-direction: column;
@@ -122,7 +119,7 @@
 }
 .lp-form-inner { width: 100%; max-width: 420px; }
 
-/* Switch vers pharmacien */
+/* Switch pharmacien */
 .lp-switch-box {
   background: var(--navy-pale);
   border: 1px solid var(--navy-tint);
@@ -346,28 +343,40 @@
 
       <form method="POST" novalidate>
         {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+          <div class="lp-messages">
+            {% for error in form.non_field_errors %}
+              <div class="lp-msg lp-msg-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
 
         <div class="lp-field">
           <label class="lp-label" for="lp_email">Adresse email</label>
-          <input class="lp-input" type="email" id="lp_email" name="email"
+          <input class="lp-input {% if form.email.errors %}is-error{% endif %}" 
+                 type="email" id="lp_email" name="email"
                  value="{{ request.POST.email|default:'' }}"
                  placeholder="marie@exemple.com"
                  autocomplete="email" required />
+          {% for err in form.email.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
         </div>
 
         <div class="lp-field">
           <label class="lp-label" for="lp_password">Mot de passe</label>
           <div class="lp-pw-wrap">
-            <input class="lp-input" type="password" id="lp_password" name="password"
+            <input class="lp-input {% if form.password.errors %}is-error{% endif %}" 
+                   type="password" id="lp_password" name="password"
                    placeholder="Votre mot de passe"
                    autocomplete="current-password" required />
-            <button type="button" class="lp-pw-toggle" onclick="lpTogglePw()">
+            <button type="button" class="lp-pw-toggle" onclick="lpTogglePw()" aria-label="Afficher le mot de passe">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                 <circle cx="12" cy="12" r="3"/>
               </svg>
             </button>
           </div>
+          {% for err in form.password.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
         </div>
 
         <div class="lp-forgot">
@@ -399,7 +408,8 @@
 <script>
 function lpTogglePw() {
   var input = document.getElementById('lp_password');
-  input.type = input.type === 'password' ? 'text' : 'password';
+  var isText = input.type === 'password';
+  input.type = isText ? 'text' : 'password';
 }
 </script>
 {% endblock %}

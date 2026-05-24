@@ -2,14 +2,12 @@
 
 <footer class="footer">
   <div class="container">
-
     <div class="footer-grid">
 
-      <!-- ── Colonne marque ── -->
+      <!-- Colonne Marque -->
       <div>
         <div class="footer-brand-name">
-          <div style="width:30px;height:30px;background:white;border-radius:8px;
-                      display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <div style="width:30px;height:30px;background:white;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <img src="{% static 'icons/symbole-logo.png' %}" width="18" height="18" alt="PharMap logo" />
           </div>
           PharMap
@@ -19,15 +17,8 @@
           et en Afrique centrale. Trouvez, réservez et payez
           vos médicaments en temps réel.
         </p>
-
-        <!-- Badges stores (optionnel) -->
         <div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap;">
-          <div style="display:inline-flex;align-items:center;gap:6px;
-                      padding:7px 12px;border-radius:8px;
-                      background:rgba(255,255,255,0.06);
-                      border:1px solid rgba(255,255,255,0.1);
-                      font-family:'Syne',sans-serif;font-size:0.68rem;
-                      font-weight:600;color:rgba(255,255,255,0.45);">
+          <div style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;color:rgba(255,255,255,0.45);">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <line x1="2" y1="12" x2="22" y2="12"/>
@@ -38,7 +29,7 @@
         </div>
       </div>
 
-      <!-- ── Colonne navigation ── -->
+      <!-- Colonne Navigation -->
       <div>
         <div class="footer-col-title">Navigation</div>
         <ul class="footer-links">
@@ -49,7 +40,7 @@
         </ul>
       </div>
 
-      <!-- ── Colonne compte ── -->
+      <!-- Colonne Compte -->
       <div>
         <div class="footer-col-title">Mon compte</div>
         <ul class="footer-links">
@@ -58,24 +49,19 @@
               <li><a href="{% url 'pharmacist:dashboard' %}">Tableau de bord</a></li>
               <li><a href="{% url 'auth_user:logout' %}">Déconnexion</a></li>
             {% else %}
-              <li><a href="{% url 'auth_user:profile' %}">Mon profil</a></li>
+              <li><a href="{% url 'patient:profile' %}">Mon profil</a></li>
               <li><a href="{% url 'orders:order_list' %}">Mes commandes</a></li>
               <li><a href="{% url 'auth_user:logout' %}">Déconnexion</a></li>
             {% endif %}
           {% else %}
             <li><a href="{% url 'auth_user:register' %}">Créer un compte patient</a></li>
             <li><a href="{% url 'auth_user:login' %}">Connexion patient</a></li>
-            <li>
-              <a href="{% url 'auth_user:login_pharmacist' %}"
-                 style="color:rgba(255,255,255,0.55);">
-                Espace pharmacien →
-              </a>
-            </li>
+            <li><a href="{% url 'auth_user:login_pharmacist' %}" style="color:rgba(255,255,255,0.55);">Espace pharmacien →</a></li>
           {% endif %}
         </ul>
       </div>
 
-      <!-- ── Colonne support ── -->
+      <!-- Colonne Support -->
       <div>
         <div class="footer-col-title">Support</div>
         <ul class="footer-links">
@@ -85,19 +71,12 @@
           <li><a href="#">Conditions d'utilisation</a></li>
         </ul>
 
-        <!-- CTA pharmacien -->
-        <div style="margin-top:24px;padding:14px;
-                    background:rgba(26,122,94,0.12);
-                    border:1px solid rgba(26,122,94,0.2);
-                    border-radius:10px;">
-          <div style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;
-                      color:rgba(255,255,255,0.55);text-transform:uppercase;
-                      letter-spacing:0.8px;margin-bottom:6px;">
+        <!-- CTA Pharmacien -->
+        <div style="margin-top:24px;padding:14px;background:rgba(26,122,94,0.12);border:1px solid rgba(26,122,94,0.2);border-radius:10px;">
+          <div style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">
             Vous êtes pharmacien ?
           </div>
-          <a href="{% url 'auth_user:register_pharmacist' %}"
-             style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;
-                    color:#6EDCBC;text-decoration:none;">
+          <a href="{% url 'auth_user:register_pharmacist' %}" style="font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;color:#6EDCBC;text-decoration:none;">
             Inscrire ma pharmacie →
           </a>
         </div>
@@ -105,7 +84,7 @@
 
     </div>
 
-    <!-- ── Bas de page ── -->
+    <!-- Bas de page -->
     <div class="footer-bottom">
       <span>© 2025 PharMap — Tous droits réservés</span>
       <span style="display:flex;align-items:center;gap:6px;">
@@ -115,6 +94,5 @@
         Fait avec soin pour l'Afrique
       </span>
     </div>
-
   </div>
 </footer>

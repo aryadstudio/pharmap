@@ -1,22 +1,22 @@
-from django.shortcuts import render, get_object_or_404,redirect
+import uuid
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from django.db.models import FloatField, ExpressionWrapper, Min, Q, F
+from django.db.models import FloatField, ExpressionWrapper, Min, Q, F, Avg
 from django.db.models.functions import ACos, Cos, Sin, Radians, Greatest, Least
 import math
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.urls import reverse
 from urllib.parse import quote
+from django.contrib import messages
 
-from pharmacies.models import Pharmacy
+# Imports locaux
+from pharmacies.models import Pharmacy, PharmacyReview, Prescription
 from medications.models import (
     Medication,
     PharmacyMedication as Stock,
     MedicationCategory as Category,
 )
-from django.contrib import messages
-from reviews.models import PharmacyReview
-
 
 EARTH_RADIUS_KM = 6371
 
@@ -37,11 +37,7 @@ DEFAULT_CATEGORIES = [
 # ──────────────────────────────────────────────────────────────────
 
 def _haversine_expr(lat, lng):
-    """
-    Distance Haversine (km) calculée en SQL.
-    On borne la valeur dans [-1, 1] avec Least/Greatest
-    pour éviter que ACos explose sur des coordonnées très proches.
-    """
+    """Distance Haversine (km) calculée en SQL."""
     inner = (
         Cos(Radians(lat)) * Cos(Radians(F('latitude')))
         * Cos(Radians(F('longitude')) - Radians(lng))
@@ -109,7 +105,7 @@ def _pha_to_dict(p, user_lat=None):
         rating = 0.0
 
     return {
-        'id':          p.id,
+        'id':          str(p.id),
         'name':        p.name or '',
         'address':     p.address or '',
         'city':        p.city or '',
@@ -128,7 +124,7 @@ def _pha_to_dict(p, user_lat=None):
 def _med_to_dict(m):
     """Sérialise un médicament en dict JSON-safe."""
     return {
-        'id':       m.id,
+        'id':       str(m.id),
         'name':     m.name or '',
         'category': m.category.name if m.category else '',
         'rx':       bool(m.requires_prescription),
@@ -137,7 +133,7 @@ def _med_to_dict(m):
 
 
 # ──────────────────────────────────────────────────────────────────
-# pharmacy_list
+# Vues
 # ──────────────────────────────────────────────────────────────────
 
 def pharmacy_list(request):
@@ -170,10 +166,6 @@ def pharmacy_list(request):
     return render(request, 'pharmacies/pharmacy_list.html', context)
 
 
-# ──────────────────────────────────────────────────────────────────
-# pharmacy_search  (HTML + AJAX)
-# ──────────────────────────────────────────────────────────────────
-
 def pharmacy_search(request):
     query    = request.GET.get('q', '').strip()
     category = request.GET.get('category', '').strip()
@@ -193,7 +185,6 @@ def pharmacy_search(request):
     if category:
         medications = medications.filter(category__slug=category)
 
-    # Évaluer le queryset maintenant pour éviter la référence circulaire
     medication_ids = list(medications.values_list('id', flat=True))
 
     # ── Pharmacies ────────────────────────────────────────────────
@@ -276,7 +267,6 @@ def pharmacy_search(request):
         'user_lng':           user_lng if user_lng is not None else '',
         'radius':             radius,
         'has_location':       user_lat is not None,
-        # JSON sérialisé proprement côté Python — zéro risque de JSON invalide
         'pharmacies_json':    json.dumps(
             [_pha_to_dict(p, user_lat) for p in pha_list],
             cls=DjangoJSONEncoder
@@ -288,10 +278,6 @@ def pharmacy_search(request):
     }
     return render(request, 'pharmacies/pharmacy_search.html', context)
 
-
-# ──────────────────────────────────────────────────────────────────
-# autocomplete
-# ──────────────────────────────────────────────────────────────────
 
 def autocomplete(request):
     """Suggestions live (AJAX)."""
@@ -315,23 +301,34 @@ def autocomplete(request):
     return JsonResponse({'results': list(meds)})
 
 
-# ──────────────────────────────────────────────────────────────────
-# pharmacy_detail
-# ──────────────────────────────────────────────────────────────────
-
 def pharmacy_detail(request, pharmacy_id):
     pharmacy = get_object_or_404(Pharmacy, id=pharmacy_id)
+    
     stocks = (
         Stock.objects
         .filter(pharmacy=pharmacy, quantity__gt=0, is_available=True)
         .select_related('medication', 'medication__category')
         .order_by('medication__name')
     )
+    
+    # Récupération des 5 derniers avis
     reviews = (
         PharmacyReview.objects
         .filter(pharmacy=pharmacy)
+        .select_related('patient')
         .order_by('-created_at')[:5]
     )
+
+    # Calcul de la distribution des notes pour les barres statistiques
+    total_reviews_count = pharmacy.total_reviews
+    distribution = []
+    if total_reviews_count > 0:
+        for star in range(5, 0, -1):
+            count = PharmacyReview.objects.filter(pharmacy=pharmacy, rating=star).count()
+            pct = round((count / total_reviews_count) * 100)
+            distribution.append({"star": star, "count": count, "pct": pct})
+    else:
+        distribution = [(5, 0), (4, 0), (3, 0), (2, 0), (1, 0)]
 
     map_markers = []
     try:
@@ -348,8 +345,9 @@ def pharmacy_detail(request, pharmacy_id):
         'pharmacy': pharmacy,
         'stocks':   stocks,
         'reviews':  reviews,
-        'sibars':   [(5, 80), (4, 12), (3, 5), (2, 2), (1, 1)],
-        'sibar2':   [(5, 75), (4, 15), (3, 6), (2, 3), (1, 1)],
+        'distribution': distribution, # Pour les barres d'histogramme
+        'sibars':   distribution,     # Alias pour compatibilité template
+        'sibar2':   distribution,     # Alias pour compatibilité template
         'map_center_json': json.dumps(
             [float(pharmacy.latitude), float(pharmacy.longitude)]
             if pharmacy.latitude and pharmacy.longitude
@@ -362,12 +360,12 @@ def pharmacy_detail(request, pharmacy_id):
     return render(request, 'pharmacies/pharmacy_detail.html', context)
 
 
-# ──────────────────────────────────────────────────────────────────
-# pharmacy_reviews
-# ──────────────────────────────────────────────────────────────────
 def pharmacy_reviews(request, pharmacy_id):
+    """Gestion complète des avis (liste + soumission)."""
     pharmacy = get_object_or_404(Pharmacy, id=pharmacy_id)
-    reviews  = PharmacyReview.objects.filter(pharmacy=pharmacy).select_related("patient").order_by("-created_at")
+    
+    # Tous les avis avec infos patient
+    reviews = PharmacyReview.objects.filter(pharmacy=pharmacy).select_related("patient").order_by("-created_at")
 
     # Distribution des notes 1→5
     total = reviews.count()
@@ -377,14 +375,15 @@ def pharmacy_reviews(request, pharmacy_id):
         pct   = round((count / total) * 100) if total > 0 else 0
         distribution.append({"star": star, "count": count, "pct": pct})
 
-    # Avis existant du user connecté
+    # Vérifier si l'utilisateur connecté a déjà laissé un avis
     user_review = None
     if request.user.is_authenticated:
         user_review = reviews.filter(patient=request.user).first()
 
-    # Soumission du formulaire
+    # Traitement du formulaire POST
     if request.method == "POST":
         if not request.user.is_authenticated:
+            messages.error(request, "Vous devez être connecté pour laisser un avis.")
             return redirect("auth_user:login")
 
         if user_review:
@@ -402,6 +401,7 @@ def pharmacy_reviews(request, pharmacy_id):
             messages.error(request, "Veuillez sélectionner une note entre 1 et 5.")
             return redirect("pharmacies:pharmacy_reviews", pharmacy_id=pharmacy_id)
 
+        # Création de l'avis
         PharmacyReview.objects.create(
             patient=request.user,
             pharmacy=pharmacy,
@@ -409,10 +409,17 @@ def pharmacy_reviews(request, pharmacy_id):
             comment=comment,
         )
 
-        # Recalcul de la note moyenne sur la pharmacie
+        # Recalcul automatique de la moyenne et du total sur la pharmacie
         all_reviews = PharmacyReview.objects.filter(pharmacy=pharmacy)
-        pharmacy.total_reviews  = all_reviews.count()
-        pharmacy.average_rating = round(sum(r.rating for r in all_reviews) / pharmacy.total_reviews, 2)
+        pharmacy.total_reviews = all_reviews.count()
+        
+        if pharmacy.total_reviews > 0:
+            # Utilisation de aggregate pour plus de précision ou somme manuelle
+            avg = all_reviews.aggregate(Avg('rating'))['rating__avg']
+            pharmacy.average_rating = round(avg, 2)
+        else:
+            pharmacy.average_rating = 0.0
+            
         pharmacy.save(update_fields=["average_rating", "total_reviews"])
 
         messages.success(request, "Votre avis a bien été publié, merci !")

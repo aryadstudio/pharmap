@@ -1,15 +1,16 @@
+import uuid
 from django.db import models
 from django.core.validators import MinValueValidator
-import uuid
 
 class Order(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
     STATUS_CHOICES = (
-        ("PENDING",    "En attente"),
-        ("CONFIRMED",  "Confirmée"),
-        ("READY",      "Prête"),
-        ("DELIVERED",  "Livrée"),
-        ("CANCELLED",  "Annulée"),
+        ("PENDING", "En attente"),
+        ("CONFIRMED", "Confirmée"),
+        ("READY", "Prête"),
+        ("DELIVERED", "Livrée"),
+        ("CANCELLED", "Annulée"),
     )
 
     patient = models.ForeignKey(
@@ -43,9 +44,11 @@ class Order(models.Model):
 
     class Meta:
         ordering = ("-created_at",)
+        verbose_name = "Commande"
+        verbose_name_plural = "Commandes"
 
     def __str__(self):
-        return f"Commande #{self.pk} — {self.patient} → {self.pharmacy}"
+        return f"Commande #{str(self.id)[:8]} — {self.patient}"
 
     def is_cancellable(self):
         return self.status in ("PENDING", "CONFIRMED")
@@ -53,6 +56,7 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
@@ -79,11 +83,17 @@ class OrderItem(models.Model):
     )
 
     class Meta:
+        verbose_name = "Ligne de commande"
+        verbose_name_plural = "Lignes de commande"
+        # On retire unique_together si on veut permettre plusieurs lignes pour le même médicament (ex: ajouts successifs), 
+        # mais généralement pour une commande simple, unique par commande+médicament est mieux. 
+        # Ici on le garde pour éviter les doublons accidentels dans le formset.
         unique_together = ("order", "medication")
 
     def __str__(self):
-        return f"{self.quantity}× {self.medication} (commande #{self.order_id})"
+        return f"{self.quantity}× {self.medication.name}"
 
     def save(self, *args, **kwargs):
+        # Recalcul automatique du sous-total avant sauvegarde
         self.subtotal = self.unit_price * self.quantity
         super().save(*args, **kwargs)

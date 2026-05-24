@@ -6,15 +6,12 @@
 
 {% block extra_css %}
 <style>
-/* ── Cache la navbar globale — cette page a son propre branding ── */
-#mainNavbar,
-.bottom-nav { display: none !important; }
+/* ── Cache la navbar globale ── */
+#mainNavbar, .bottom-nav { display: none !important; }
 
 /* ════════════════════════════════════════
-   REGISTER PATIENT — préfixe .rp-
-   Zéro conflit avec les autres pages
+   REGISTER PATIENT (.rp-)
 ════════════════════════════════════════ */
-
 .rp-page {
   min-height: 100vh;
   display: grid;
@@ -22,7 +19,7 @@
   background: var(--sand);
 }
 
-/* ── Panneau gauche (visuel) ── */
+/* Panneau gauche (visuel) */
 .rp-visual {
   position: relative;
   background: var(--navy);
@@ -31,7 +28,6 @@
   flex-direction: column;
   justify-content: flex-end;
   padding: 56px;
-  min-height: 100vh;
 }
 .rp-visual-bg {
   position: absolute; inset: 0;
@@ -114,7 +110,7 @@
   color: rgba(255,255,255,0.6);
 }
 
-/* ── Panneau droit (formulaire) ── */
+/* Panneau droit (formulaire) */
 .rp-form-panel {
   display: flex;
   flex-direction: column;
@@ -150,7 +146,6 @@
   display: flex; flex-direction: column;
   gap: 6px; margin-bottom: 16px;
 }
-.rp-field:last-child { margin-bottom: 0; }
 .rp-label {
   font-family: 'Syne', sans-serif;
   font-size: 0.72rem; font-weight: 700;
@@ -362,6 +357,14 @@
 
       <form method="POST" novalidate>
         {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+          <div class="rp-messages">
+            {% for error in form.non_field_errors %}
+              <div class="rp-msg rp-msg-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
 
         <div class="rp-row">
           <div class="rp-field">
@@ -369,7 +372,7 @@
             <input class="rp-input {% if form.first_name.errors %}is-error{% endif %}"
                    type="text" id="id_first_name" name="first_name"
                    value="{{ form.first_name.value|default:'' }}"
-                   placeholder="Marie" autocomplete="given-name" />
+                   placeholder="Marie" autocomplete="given-name" required />
             {% for err in form.first_name.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
           </div>
           <div class="rp-field">
@@ -377,7 +380,7 @@
             <input class="rp-input {% if form.last_name.errors %}is-error{% endif %}"
                    type="text" id="id_last_name" name="last_name"
                    value="{{ form.last_name.value|default:'' }}"
-                   placeholder="Obame" autocomplete="family-name" />
+                   placeholder="Obame" autocomplete="family-name" required />
             {% for err in form.last_name.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
           </div>
         </div>
@@ -387,7 +390,7 @@
           <input class="rp-input {% if form.email.errors %}is-error{% endif %}"
                  type="email" id="id_email" name="email"
                  value="{{ form.email.value|default:'' }}"
-                 placeholder="marie@exemple.com" autocomplete="email" />
+                 placeholder="marie@exemple.com" autocomplete="email" required />
           {% for err in form.email.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
         </div>
 
@@ -396,7 +399,7 @@
           <input class="rp-input {% if form.phone.errors %}is-error{% endif %}"
                  type="tel" id="id_phone" name="phone"
                  value="{{ form.phone.value|default:'' }}"
-                 placeholder="+241 06 00 00 00" autocomplete="tel" />
+                 placeholder="+241 06 00 00 00" autocomplete="tel" required />
           {% for err in form.phone.errors %}<span class="rp-error">{{ err }}</span>{% endfor %}
         </div>
 
@@ -406,8 +409,8 @@
             <input class="rp-input {% if form.password1.errors %}is-error{% endif %}"
                    type="password" id="id_password1" name="password1"
                    placeholder="8 caractères minimum"
-                   autocomplete="new-password" />
-            <button type="button" class="rp-pw-toggle" onclick="togglePw('id_password1', this)">
+                   autocomplete="new-password" required />
+            <button type="button" class="rp-pw-toggle" onclick="togglePw('id_password1', this)" aria-label="Afficher le mot de passe">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                 <circle cx="12" cy="12" r="3"/>
@@ -423,8 +426,8 @@
             <input class="rp-input {% if form.password2.errors %}is-error{% endif %}"
                    type="password" id="id_password2" name="password2"
                    placeholder="Répétez votre mot de passe"
-                   autocomplete="new-password" />
-            <button type="button" class="rp-pw-toggle" onclick="togglePw('id_password2', this)">
+                   autocomplete="new-password" required />
+            <button type="button" class="rp-pw-toggle" onclick="togglePw('id_password2', this)" aria-label="Afficher le mot de passe">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                 <circle cx="12" cy="12" r="3"/>
@@ -457,6 +460,7 @@ function togglePw(id, btn) {
   var isText = input.type === 'text';
   input.type = isText ? 'password' : 'text';
   btn.style.color = isText ? 'var(--ink-4)' : 'var(--navy)';
+  // Mise à jour de l'icône (optionnel, simplifié ici par changement de couleur)
 }
 </script>
 {% endblock %}

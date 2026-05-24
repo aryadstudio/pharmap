@@ -10,8 +10,6 @@ urlpatterns = [
     path("pharmacies/", include("pharmacies.urls")),
     path("medications/", include("medications.urls")),
     path("orders/", include("orders.urls")),
-    path("prescriptions/", include("prescriptions.urls")),
-    path("reviews/", include("reviews.urls")),
     path("chats/", include("chats.urls")),
     path("client/", include("client.urls"), name="client"),
     path("",views.home, name="home"),
